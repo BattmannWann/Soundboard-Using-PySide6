@@ -1,0 +1,9 @@
+#Virtual Environment
+.venv/
+.venv
+venv/
+
+#Unnecessary Python Files
+pyside_soundboard.py 
+python_testing.py 
+soundboard.py

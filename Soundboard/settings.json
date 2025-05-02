@@ -1,0 +1,30 @@
+{
+    "volume": 0.5,
+    "sounds_path": "sounds",
+    "default_input_info": {
+        "name": "SteelSeries Sonar - Gaming (Ste",
+        "index": 5,
+        "hostapi": 0,
+        "max_input_channels": 0,
+        "max_output_channels": 8,
+        "default_low_input_latency": 0.09,
+        "default_low_output_latency": 0.09,
+        "default_high_input_latency": 0.18,
+        "default_high_output_latency": 0.18,
+        "default_samplerate": 44100.0
+    },
+    "default_output_info": {
+        "name": "SteelSeries Sonar - Microphone ",
+        "index": 1,
+        "hostapi": 0,
+        "max_input_channels": 2,
+        "max_output_channels": 0,
+        "default_low_input_latency": 0.09,
+        "default_low_output_latency": 0.09,
+        "default_high_input_latency": 0.18,
+        "default_high_output_latency": 0.18,
+        "default_samplerate": 44100.0
+    },
+    "default_output": 6,
+    "default_input": 5
+}
