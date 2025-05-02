@@ -1,9 +1,21 @@
-#Virtual Environment
+# Virtual Environment
 .venv/
-.venv
 venv/
 
-#Unnecessary Python Files
-/pyside_soundboard.py 
-/python_testing.py 
-/soundboard.py
+# Byte-compiled / cache files
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Editor/IDE configs
+.vscode/
+*.swp
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Soundboard Python files (if you want to ignore them)
+pyside_soundboard.py
+python_testing.py
+soundboard.py

@@ -20,6 +20,7 @@ from PySide6.QtWidgets import (
     QScrollArea, 
     QSlider,
     QLineEdit,
+    QFrame, 
     
 )
 
@@ -29,6 +30,7 @@ import sounddevice as sd
 import soundfile as sf
 import shutil
 import numpy as np
+from mutagen import File as MutagenFile
 
 #--------------------------------------------------------------------
 
@@ -110,7 +112,8 @@ class EditFiles(QWidget):
         self.main_app = main_app
         self.main_app.hide()
         self.setWindowTitle("Edit File(s)")
-        self.resize(800, 800)
+        self.resize(1200, 800)
+        self.setMinimumSize(1000, 800)
         
         self.scroll_area = QScrollArea()
         self.scroll_area.setWidgetResizable(True)
@@ -119,32 +122,72 @@ class EditFiles(QWidget):
         
         self.content_widget = QWidget()
         self.grid = QGridLayout(self.content_widget)
+        #self.grid.setContentsMargins(20, 10, 10, 10)
         
         #self.layout.addLayout(self.grid)
         self.scroll_area.setWidget(self.content_widget)
         self.layout.addWidget(self.scroll_area)
         
         self.emoji = QLabel("Emoji")
-        self.sound_name = QLabel("Name")
-        self.duration = QLabel("Duration")
-        self.options = QLabel("Options")
+        self.emoji.setAlignment(Qt.AlignmentFlag.AlignHCenter)
         
-        font = emoji.font()
+        self.sound_name = QLabel("Name")
+        self.sound_name.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        
+        self.duration = QLabel("Duration")
+        self.duration.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        
+        self.options = QLabel("Options")
+        self.options.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        
+        self.underline = QFrame()
+        self.underline.setFrameShape(QFrame.HLine)
+        self.underline.setFrameShadow(QFrame.Plain)
+        self.underline.setStyleSheet("color: gray; background-color: gray;")
+        
+        self.vertical_separator = QFrame()
+        self.vertical_separator.setFrameShape(QFrame.VLine)
+        self.vertical_separator.setFrameShadow(QFrame.Sunken)
+        self.vertical_separator.setStyleSheet("color: gray;")
+        
+        
+        self.vertical_separator2 = QFrame()
+        self.vertical_separator2.setFrameShape(QFrame.VLine)
+        self.vertical_separator2.setFrameShadow(QFrame.Sunken)
+        self.vertical_separator2.setStyleSheet("color: gray;")
+        
+        
+        font = self.emoji.font()
+        font.setPointSize(15)
+        
+        self.emoji.setFont(font)
+        self.sound_name.setFont(font)
+        self.duration.setFont(font)
+        self.options.setFont(font)
         
         self.grid.addWidget(self.emoji, 0, 0)
         self.grid.addWidget(self.sound_name, 0, 1)
         self.grid.addWidget(self.duration, 0, 2)
-        self.grid.addWidget(self.options, 0, 3)
         
+        self.grid.addWidget(self.options, 0, 4)
+        self.grid.addWidget(self.underline, 1, 0, 1, -1)
+        self.grid.addWidget(self.vertical_separator, 0, 0, -1, 1, alignment = Qt.AlignmentFlag.AlignRight)
+        self.grid.addWidget(self.vertical_separator2, 0, 2, -1, 1, alignment = Qt.AlignmentFlag.AlignRight)
+
         
-        curr_grid = 1
+        curr_grid = 2
         
         for key, value in self.main_app.sound_buttons.items():
             
             sound_name = QLabel(key)
+            sound_name.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+            
             emoji = QLabel()
             emoji.setPixmap(QPixmap(f"{self.main_app.icons_path}/angry.png").scaled(40,40))
+            emoji.setAlignment(Qt.AlignmentFlag.AlignHCenter)
             
+            duration = QLabel(f"{value["duration"]}")
+            duration.setAlignment(Qt.AlignmentFlag.AlignHCenter)
             
             remove_button = QPushButton()
             remove_button.setIcon(QIcon(f"{self.main_app.icons_path}/cross.png"))
@@ -160,9 +203,10 @@ class EditFiles(QWidget):
             
             self.grid.addWidget(emoji, curr_grid, 0)            
             self.grid.addWidget(sound_name, curr_grid, 1)
-            self.grid.addWidget(remove_button, curr_grid, 2)
-            self.grid.addWidget(edit_name_button, curr_grid, 3)
-            self.grid.addWidget(edit_sound_length_button, curr_grid, 4)
+            self.grid.addWidget(duration, curr_grid, 2)
+            self.grid.addWidget(remove_button, curr_grid, 3)
+            self.grid.addWidget(edit_name_button, curr_grid, 4)
+            self.grid.addWidget(edit_sound_length_button, curr_grid, 5)
             
             curr_grid += 1
             
@@ -304,6 +348,16 @@ class MainWindow(QMainWindow):
             
             name = os.path.splitext(file)[0]
             path = os.path.join(self.sounds_path, file)
+            
+            try:
+                audio = MutagenFile(path)
+                
+                if audio is not None and audio.info is not None:
+                    duration = round(audio.info.length, 2)
+                
+            except Exception as e:
+                print(f"Failed to read {file}: {e}")
+                duration = None
 
             icon_path = os.path.join(self.icons_path, name + ".png")
             btn = QPushButton(name[:40])
@@ -315,7 +369,7 @@ class MainWindow(QMainWindow):
 
             row, col = divmod(idx, 2)
             self.grid.addWidget(btn, row, col)
-            self.sound_buttons[name] = {"path": path, "emoji_path": icon_path}
+            self.sound_buttons[name] = {"path": path, "emoji_path": icon_path, "duration": duration}
             
     
         
