@@ -4,6 +4,6 @@
 venv/
 
 #Unnecessary Python Files
-pyside_soundboard.py 
-python_testing.py 
-soundboard.py
+/pyside_soundboard.py 
+/python_testing.py 
+/soundboard.py
