@@ -114,6 +114,8 @@ class EditFiles(QWidget):
         self.setWindowTitle("Edit File(s)")
         self.resize(1200, 800)
         self.setMinimumSize(1000, 800)
+
+        self.button_to_options_mapping = {}
         
         self.scroll_area = QScrollArea()
         self.scroll_area.setWidgetResizable(True)
@@ -122,7 +124,7 @@ class EditFiles(QWidget):
         
         self.content_widget = QWidget()
         self.grid = QGridLayout(self.content_widget)
-        #self.grid.setContentsMargins(20, 10, 10, 10)
+        #self.grid.setContentsMargins(10, 10, 10, 10)
         
         #self.layout.addLayout(self.grid)
         self.scroll_area.setWidget(self.content_widget)
@@ -140,21 +142,15 @@ class EditFiles(QWidget):
         self.options = QLabel("Options")
         self.options.setAlignment(Qt.AlignmentFlag.AlignCenter)
         
-        self.underline = QFrame()
-        self.underline.setFrameShape(QFrame.HLine)
-        self.underline.setFrameShadow(QFrame.Plain)
-        self.underline.setStyleSheet("color: gray; background-color: gray;")
+        self.underline = self.create_horizontal_separator()
+        self.heading_line = self.create_horizontal_separator()
+        self.bottom_line = self.create_horizontal_separator()
         
-        self.vertical_separator = QFrame()
-        self.vertical_separator.setFrameShape(QFrame.VLine)
-        self.vertical_separator.setFrameShadow(QFrame.Sunken)
-        self.vertical_separator.setStyleSheet("color: gray;")
-        
-        
-        self.vertical_separator2 = QFrame()
-        self.vertical_separator2.setFrameShape(QFrame.VLine)
-        self.vertical_separator2.setFrameShadow(QFrame.Sunken)
-        self.vertical_separator2.setStyleSheet("color: gray;")
+        self.vertical_separator = self.create_vertical_separator()
+        self.vertical_separator2 = self.create_vertical_separator()
+        self.vertical_separator3 = self.create_vertical_separator()
+        self.vertical_separator4 = self.create_vertical_separator()
+        self.vertical_separator5 = self.create_vertical_separator()
         
         
         font = self.emoji.font()
@@ -165,17 +161,22 @@ class EditFiles(QWidget):
         self.duration.setFont(font)
         self.options.setFont(font)
         
-        self.grid.addWidget(self.emoji, 0, 0)
-        self.grid.addWidget(self.sound_name, 0, 1)
-        self.grid.addWidget(self.duration, 0, 2)
-        
-        self.grid.addWidget(self.options, 0, 4)
-        self.grid.addWidget(self.underline, 1, 0, 1, -1)
+        self.grid.addWidget(self.emoji, 1, 0)
+        self.grid.addWidget(self.sound_name, 1, 1)
+        self.grid.addWidget(self.duration, 1, 2)
+        self.grid.addWidget(self.options, 1, 4)
+
+        self.grid.addWidget(self.heading_line, 0, 0, 1, -1)
+        self.grid.addWidget(self.underline, 2, 0, 1, -1)
+
         self.grid.addWidget(self.vertical_separator, 0, 0, -1, 1, alignment = Qt.AlignmentFlag.AlignRight)
         self.grid.addWidget(self.vertical_separator2, 0, 2, -1, 1, alignment = Qt.AlignmentFlag.AlignRight)
+        self.grid.addWidget(self.vertical_separator3, 0, 0, -1, 1, alignment = Qt.AlignmentFlag.AlignLeft)
+        self.grid.addWidget(self.vertical_separator4, 0, 5, -1, 1, alignment = Qt.AlignmentFlag.AlignRight)
+        self.grid.addWidget(self.vertical_separator5, 0, 2, -1, 1, alignment = Qt.AlignmentFlag.AlignLeft)
 
         
-        curr_grid = 2
+        curr_grid = 3
         
         for key, value in self.main_app.sound_buttons.items():
             
@@ -186,7 +187,7 @@ class EditFiles(QWidget):
             emoji.setPixmap(QPixmap(f"{self.main_app.icons_path}/angry.png").scaled(40,40))
             emoji.setAlignment(Qt.AlignmentFlag.AlignHCenter)
             
-            duration = QLabel(f"{value["duration"]}")
+            duration = QLabel(f"{value["duration"]}s")
             duration.setAlignment(Qt.AlignmentFlag.AlignHCenter)
             
             remove_button = QPushButton()
@@ -207,13 +208,40 @@ class EditFiles(QWidget):
             self.grid.addWidget(remove_button, curr_grid, 3)
             self.grid.addWidget(edit_name_button, curr_grid, 4)
             self.grid.addWidget(edit_sound_length_button, curr_grid, 5)
+
+            self.button_to_options_mapping[sound_name] = {"remove": remove_button, 
+                                                          "rename": edit_name_button, 
+                                                          "modify_length": edit_sound_length_button}
             
             curr_grid += 1
-            
+
+        self.grid.addWidget(self.bottom_line, curr_grid, 0, 1, -1)
+
             
     def closeEvent(self, event):
         self.main_app.show()
         return super().closeEvent(event)
+    
+    
+    def create_vertical_separator(self):
+        
+        vertical_separator = QFrame()
+        vertical_separator.setFrameShape(QFrame.VLine)
+        vertical_separator.setFrameShadow(QFrame.Plain)
+        vertical_separator.setStyleSheet("color: gray; background-color: gray;")
+        vertical_separator.setContentsMargins(10, 10, 10, 10)
+
+        return vertical_separator
+    
+    
+    def create_horizontal_separator(self):
+
+        horizontal_separator = QFrame()
+        horizontal_separator.setFrameShape(QFrame.HLine)
+        horizontal_separator.setFrameShadow(QFrame.Plain)
+        horizontal_separator.setStyleSheet("color: gray; background-color: gray;")
+
+        return horizontal_separator
                
                   
 
@@ -284,8 +312,9 @@ class MainWindow(QMainWindow):
         layout_widget = QWidget()
         layout_widget.setLayout(self.layout)
         self.setCentralWidget(layout_widget)
-        
-        self.setMinimumSize((QSize(1000, 500)))
+
+        self.setMinimumSize((QSize(1100, 450)))
+        self.setMaximumSize(QSize(1200, 1000))
         
         toolbar = QToolBar("Soundboard Toolbar")
         toolbar.setIconSize(QSize(16,16))
@@ -309,6 +338,13 @@ class MainWindow(QMainWindow):
         edit_files_button.triggered.connect(self.edit_files)
         
         toolbar.addAction(edit_files_button)
+        toolbar.addSeparator()
+
+        stop_sounds_button = QAction("Stop Sound(s)", self)
+        stop_sounds_button.setStatusTip("Stop playing the current sound(s)")
+        stop_sounds_button.triggered.connect(self.stop_sounds)
+
+        toolbar.addAction(stop_sounds_button)
         toolbar.addSeparator()
         
         spacer = QWidget()
@@ -402,6 +438,10 @@ class MainWindow(QMainWindow):
         
         self.external_window = Settings(self)
         self.external_window.show()
+
+    def stop_sounds(self):
+        pygame.mixer.stop()
+        sd.stop()
         
         
     def save_settings(self):

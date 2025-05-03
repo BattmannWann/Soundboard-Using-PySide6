@@ -19,3 +19,6 @@ Thumbs.db
 pyside_soundboard.py
 python_testing.py
 soundboard.py
+
+#JSON Files
+settings.json

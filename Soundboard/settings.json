@@ -1,12 +1,11 @@
 {
-    "volume": 0.5,
-    "sounds_path": "sounds",
+    "volume": 1.0,
     "default_input_info": {
-        "name": "SteelSeries Sonar - Gaming (Ste",
-        "index": 5,
+        "name": "Speakers (Realtek(R) Audio)",
+        "index": 3,
         "hostapi": 0,
         "max_input_channels": 0,
-        "max_output_channels": 8,
+        "max_output_channels": 2,
         "default_low_input_latency": 0.09,
         "default_low_output_latency": 0.09,
         "default_high_input_latency": 0.18,
@@ -14,7 +13,7 @@
         "default_samplerate": 44100.0
     },
     "default_output_info": {
-        "name": "SteelSeries Sonar - Microphone ",
+        "name": "Microphone Array (AMD Audio Dev",
         "index": 1,
         "hostapi": 0,
         "max_input_channels": 2,
@@ -25,6 +24,6 @@
         "default_high_output_latency": 0.18,
         "default_samplerate": 44100.0
     },
-    "default_output": 6,
-    "default_input": 5
+    "default_output": 1,
+    "default_input": 3
 }
