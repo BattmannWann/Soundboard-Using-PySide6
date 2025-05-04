@@ -139,13 +139,14 @@ class EditFiles(QWidget):
         self.duration = QLabel("Duration")
         self.duration.setAlignment(Qt.AlignmentFlag.AlignHCenter)
         
-        self.options = QLabel("Options")
-        self.options.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.options = QLabel("Options: Remove, Rename, Edit Sound Length")
+        self.options.setAlignment(Qt.AlignmentFlag.AlignHCenter)
         
         self.underline = self.create_horizontal_separator()
         self.heading_line = self.create_horizontal_separator()
         self.bottom_line = self.create_horizontal_separator()
         
+        #These are the vertical lines that span from left to right
         self.vertical_separator = self.create_vertical_separator()
         self.vertical_separator2 = self.create_vertical_separator()
         self.vertical_separator3 = self.create_vertical_separator()
@@ -193,25 +194,33 @@ class EditFiles(QWidget):
             remove_button = QPushButton()
             remove_button.setIcon(QIcon(f"{self.main_app.icons_path}/cross.png"))
             remove_button.setStatusTip("Remove Sound")
+            remove_button.clicked.connect(lambda _, name = sound_name: self.delete_sound(name))
+            remove_button.setFixedSize(100, 20)
             
             edit_name_button = QPushButton()
             edit_name_button.setIcon(QIcon(f"{self.main_app.icons_path}/application-rename.png"))
             edit_name_button.setStatusTip("Rename Sound")
+            edit_name_button.clicked.connect(lambda _, name = sound_name: self.rename_sound(name))
+            edit_name_button.setFixedSize(100, 20)
             
             edit_sound_length_button = QPushButton()
             edit_sound_length_button.setIcon(QIcon(f"{self.main_app.icons_path}/radio--pencil"))
             edit_sound_length_button.setStatusTip("Modify Sound Length/Segment")
+            edit_sound_length_button.clicked.connect(lambda _, name = sound_name: self.edit_sound_length(name))
+            edit_sound_length_button.setFixedSize(100, 20)
             
             self.grid.addWidget(emoji, curr_grid, 0)            
             self.grid.addWidget(sound_name, curr_grid, 1)
             self.grid.addWidget(duration, curr_grid, 2)
-            self.grid.addWidget(remove_button, curr_grid, 3)
-            self.grid.addWidget(edit_name_button, curr_grid, 4)
-            self.grid.addWidget(edit_sound_length_button, curr_grid, 5)
+            self.grid.addWidget(remove_button, curr_grid, 3, alignment = Qt.AlignmentFlag.AlignRight)
+            self.grid.addWidget(edit_name_button, curr_grid, 4, alignment = Qt.AlignmentFlag.AlignCenter)
+            self.grid.addWidget(edit_sound_length_button, curr_grid, 4, alignment = Qt.AlignmentFlag.AlignRight)
 
             self.button_to_options_mapping[sound_name] = {"remove": remove_button, 
                                                           "rename": edit_name_button, 
-                                                          "modify_length": edit_sound_length_button}
+                                                          "modify_length": edit_sound_length_button,
+                                                          "pos": curr_grid,
+                                                        }
             
             curr_grid += 1
 
@@ -242,6 +251,19 @@ class EditFiles(QWidget):
         horizontal_separator.setStyleSheet("color: gray; background-color: gray;")
 
         return horizontal_separator
+    
+    
+    def delete_sound(self, name):
+    
+        print(name.text())
+    
+    
+    def rename_sound(self, name):
+        print(name.text())
+    
+    
+    def edit_sound_length(self, name):
+        print(name.text())
                
                   
 
@@ -440,6 +462,7 @@ class MainWindow(QMainWindow):
         self.external_window.show()
 
     def stop_sounds(self):
+        print("Stopping sound(s)")
         pygame.mixer.stop()
         sd.stop()
         

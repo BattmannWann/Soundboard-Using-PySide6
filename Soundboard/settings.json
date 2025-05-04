@@ -24,6 +24,6 @@
         "default_high_output_latency": 0.18,
         "default_samplerate": 44100.0
     },
-    "default_output": 1,
-    "default_input": 3
+    "default_output": 6,
+    "default_input": 5
 }
