@@ -31,6 +31,7 @@ import soundfile as sf
 import shutil
 import numpy as np
 from mutagen import File as MutagenFile
+import getpass
 
 #--------------------------------------------------------------------
 
@@ -70,18 +71,25 @@ class Settings(QWidget):
         save_button.clicked.connect(self.save)
         save_button.setFixedSize(60,20)
         
-        default_volume_label = QLabel("Default Volume Setting: ")
-        default_volume = QLineEdit()
-        default_volume.setMaxLength(10)
-        default_volume.setPlaceholderText("Enter the volume here, E.g. 100")
-        default_volume.setValidator(QIntValidator(1, 100, self))
+        self.default_volume_label = QLabel("Default Volume Setting: ")
+        self.default_volume = QLineEdit()
+        self.default_volume.setMaxLength(10)
+        self.default_volume.setPlaceholderText("Enter the volume here, E.g. 100")
+        self.default_volume.setValidator(QIntValidator(1, 100, self))
+        
+
+        self.username_label = QLabel("Username: ")
+        self.username = QLineEdit()
+        self.username.setPlaceholderText(f"{self.main_app.settings["username"]}")
         
         self.grid.addWidget(input_audio_label, 0, 0)
         self.grid.addWidget(self.input_audio_option, 0, 1)
         self.grid.addWidget(output_audio_label, 1, 0)
         self.grid.addWidget(self.output_audio_option, 1, 1)
-        self.grid.addWidget(default_volume_label, 2, 0)
-        self.grid.addWidget(default_volume, 2, 1)
+        self.grid.addWidget(self.default_volume_label, 2, 0)
+        self.grid.addWidget(self.default_volume, 2, 1)
+        self.grid.addWidget(self.username_label, 3, 0)
+        self.grid.addWidget(self.username, 3, 1)
         
         layout.addWidget(save_button, Qt.AlignmentFlag.AlignCenter)
         
@@ -93,10 +101,39 @@ class Settings(QWidget):
         
         
     def save(self):
-        self.main_app.settings["default_output"] = self.output_audio_option.currentIndex()
-        self.main_app.settings["default_input"] = self.input_audio_option.currentIndex()
+
+        try:
+
+            self.main_app.settings["default_output"] = self.output_audio_option.currentIndex()
+            self.main_app.settings["default_input"] = self.input_audio_option.currentIndex()
+
+
+            if self.default_volume.text().strip() == "":
+                self.main_app.settings["volume"] = self.main_app.settings["volume"]
+
+            else:
+                self.main_app.settings["volume"] = float(self.default_volume.text())/100
+                self.main_app.volume_slider.setValue(self.main_app.settings["volume"]*100)
+
+            if self.username.text().strip() == "":
+                self.main_app.settings["username"] = self.main_app.settings["username"]
+
+            else:
+
+                self.main_app.settings["username"] = self.username.text()
+                self.main_app.welcome_label.setText(f"Welcome {self.username.text()}")
+            
+            self.main_app.save_settings()
+
+            QMessageBox.information(self, "Success!", "You settings have been saved successfully.")
+            self.close()
+
+        except Exception as e:
+            QMessageBox.warning(self, "Error", f"Unable to save settings, see: {e}")
+
         
-        self.main_app.save_settings()
+
+
         
     def closeEvent(self, event):
         self.main_app.show()
@@ -112,60 +149,86 @@ class EditFiles(QWidget):
         self.main_app = main_app
         self.main_app.hide()
         self.setWindowTitle("Edit File(s)")
-        self.resize(1200, 800)
-        self.setMinimumSize(1000, 800)
+        self.resize(1300, 800)
+        self.setMinimumSize(1300, 800)
 
         self.button_to_options_mapping = {}
-        
+
         self.scroll_area = QScrollArea()
         self.scroll_area.setWidgetResizable(True)
-        
+            
         self.layout = QVBoxLayout(self)
-        
+            
         self.content_widget = QWidget()
         self.grid = QGridLayout(self.content_widget)
-        #self.grid.setContentsMargins(10, 10, 10, 10)
         
-        #self.layout.addLayout(self.grid)
+        self.load_sound_options()
+
+            
+    def closeEvent(self, event):
+        self.main_app.show()
+        return super().closeEvent(event)
+    
+    
+    def load_sound_options(self):
+
+        try:
+
+            if self.grid:
+
+                for i in reversed(range(self.grid.count())):
+                    item = self.grid.itemAt(i)
+                    widget = item.widget()
+
+                    if widget is not None:
+                        widget.setParent(None)  # Detach the widget from the layout
+                        widget.deleteLater()
+
+        except Exception as e:
+
+            pass
+
+
         self.scroll_area.setWidget(self.content_widget)
         self.layout.addWidget(self.scroll_area)
-        
+            
         self.emoji = QLabel("Emoji")
         self.emoji.setAlignment(Qt.AlignmentFlag.AlignHCenter)
-        
+            
         self.sound_name = QLabel("Name")
         self.sound_name.setAlignment(Qt.AlignmentFlag.AlignHCenter)
-        
+            
         self.duration = QLabel("Duration")
         self.duration.setAlignment(Qt.AlignmentFlag.AlignHCenter)
-        
-        self.options = QLabel("Options: Remove, Rename, Edit Sound Length")
+            
+        self.options = QLabel("Options")
         self.options.setAlignment(Qt.AlignmentFlag.AlignHCenter)
-        
+            
         self.underline = self.create_horizontal_separator()
         self.heading_line = self.create_horizontal_separator()
         self.bottom_line = self.create_horizontal_separator()
-        
+            
         #These are the vertical lines that span from left to right
         self.vertical_separator = self.create_vertical_separator()
         self.vertical_separator2 = self.create_vertical_separator()
         self.vertical_separator3 = self.create_vertical_separator()
         self.vertical_separator4 = self.create_vertical_separator()
         self.vertical_separator5 = self.create_vertical_separator()
-        
-        
+            
+            
         font = self.emoji.font()
         font.setPointSize(15)
-        
+            
         self.emoji.setFont(font)
         self.sound_name.setFont(font)
         self.duration.setFont(font)
         self.options.setFont(font)
+
         
         self.grid.addWidget(self.emoji, 1, 0)
         self.grid.addWidget(self.sound_name, 1, 1)
         self.grid.addWidget(self.duration, 1, 2)
-        self.grid.addWidget(self.options, 1, 4)
+        self.grid.addWidget(self.options, 1, 3)
 
         self.grid.addWidget(self.heading_line, 0, 0, 1, -1)
         self.grid.addWidget(self.underline, 2, 0, 1, -1)
@@ -173,10 +236,9 @@ class EditFiles(QWidget):
         self.grid.addWidget(self.vertical_separator, 0, 0, -1, 1, alignment = Qt.AlignmentFlag.AlignRight)
         self.grid.addWidget(self.vertical_separator2, 0, 2, -1, 1, alignment = Qt.AlignmentFlag.AlignRight)
         self.grid.addWidget(self.vertical_separator3, 0, 0, -1, 1, alignment = Qt.AlignmentFlag.AlignLeft)
-        self.grid.addWidget(self.vertical_separator4, 0, 5, -1, 1, alignment = Qt.AlignmentFlag.AlignRight)
+        self.grid.addWidget(self.vertical_separator4, 0, 3, -1, 1, alignment = Qt.AlignmentFlag.AlignRight)
         self.grid.addWidget(self.vertical_separator5, 0, 2, -1, 1, alignment = Qt.AlignmentFlag.AlignLeft)
 
-        
         curr_grid = 3
         
         for key, value in self.main_app.sound_buttons.items():
@@ -195,26 +257,27 @@ class EditFiles(QWidget):
             remove_button.setIcon(QIcon(f"{self.main_app.icons_path}/cross.png"))
             remove_button.setStatusTip("Remove Sound")
             remove_button.clicked.connect(lambda _, name = sound_name: self.delete_sound(name))
-            remove_button.setFixedSize(100, 20)
+            remove_button.setFixedSize(70, 20)
             
             edit_name_button = QPushButton()
             edit_name_button.setIcon(QIcon(f"{self.main_app.icons_path}/application-rename.png"))
             edit_name_button.setStatusTip("Rename Sound")
             edit_name_button.clicked.connect(lambda _, name = sound_name: self.rename_sound(name))
-            edit_name_button.setFixedSize(100, 20)
+            edit_name_button.setFixedSize(70, 20)
             
             edit_sound_length_button = QPushButton()
             edit_sound_length_button.setIcon(QIcon(f"{self.main_app.icons_path}/radio--pencil"))
             edit_sound_length_button.setStatusTip("Modify Sound Length/Segment")
             edit_sound_length_button.clicked.connect(lambda _, name = sound_name: self.edit_sound_length(name))
-            edit_sound_length_button.setFixedSize(100, 20)
+            edit_sound_length_button.setFixedSize(70, 20)
+            edit_sound_length_button.setStyleSheet("margin-right: 5px;")
             
             self.grid.addWidget(emoji, curr_grid, 0)            
             self.grid.addWidget(sound_name, curr_grid, 1)
             self.grid.addWidget(duration, curr_grid, 2)
-            self.grid.addWidget(remove_button, curr_grid, 3, alignment = Qt.AlignmentFlag.AlignRight)
-            self.grid.addWidget(edit_name_button, curr_grid, 4, alignment = Qt.AlignmentFlag.AlignCenter)
-            self.grid.addWidget(edit_sound_length_button, curr_grid, 4, alignment = Qt.AlignmentFlag.AlignRight)
+            self.grid.addWidget(remove_button, curr_grid, 3, alignment = Qt.AlignmentFlag.AlignLeft)
+            self.grid.addWidget(edit_name_button, curr_grid, 3, alignment = Qt.AlignmentFlag.AlignHCenter)
+            self.grid.addWidget(edit_sound_length_button, curr_grid, 3, alignment = Qt.AlignmentFlag.AlignRight)
 
             self.button_to_options_mapping[sound_name] = {"remove": remove_button, 
                                                           "rename": edit_name_button, 
@@ -226,11 +289,6 @@ class EditFiles(QWidget):
 
         self.grid.addWidget(self.bottom_line, curr_grid, 0, 1, -1)
 
-            
-    def closeEvent(self, event):
-        self.main_app.show()
-        return super().closeEvent(event)
-    
     
     def create_vertical_separator(self):
         
@@ -238,7 +296,6 @@ class EditFiles(QWidget):
         vertical_separator.setFrameShape(QFrame.VLine)
         vertical_separator.setFrameShadow(QFrame.Plain)
         vertical_separator.setStyleSheet("color: gray; background-color: gray;")
-        vertical_separator.setContentsMargins(10, 10, 10, 10)
 
         return vertical_separator
     
@@ -248,15 +305,37 @@ class EditFiles(QWidget):
         horizontal_separator = QFrame()
         horizontal_separator.setFrameShape(QFrame.HLine)
         horizontal_separator.setFrameShadow(QFrame.Plain)
-        horizontal_separator.setStyleSheet("color: gray; background-color: gray;")
+        horizontal_separator.setStyleSheet("color: gray; background-color: gray; padding-left: 50px;")
 
         return horizontal_separator
     
     
     def delete_sound(self, name):
-    
-        print(name.text())
-    
+
+        warning_msg = QMessageBox.question(self, "Confirm", f"Are you sure that you want to delete {name.text()}?", 
+                                           QMessageBox.Cancel | QMessageBox.Yes)
+        
+        try:
+
+            if warning_msg == QMessageBox.Yes:
+
+                print(f"Removing {self.main_app.sound_buttons[name.text()]["path"]}...")
+                os.remove(self.main_app.sound_buttons[name.text()]["path"])
+                self.main_app.sound_buttons.pop(name.text())
+        
+        except Exception as e:
+            print("Error, looks like something went wrong: {e}")
+            return
+
+        ok_box = QMessageBox(self)
+        ok_box.setWindowTitle("Success!")
+        ok_box.setText(f"{name.text()} has been successfully deleted.")
+        ok_box.setStandardButtons(QMessageBox.Ok)
+        ok_box.exec()
+
+        self.main_app.load_sounds()
+        self.load_sound_options()
+
     
     def rename_sound(self, name):
         print(name.text())
@@ -266,7 +345,6 @@ class EditFiles(QWidget):
         print(name.text())
                
                   
-
 class MainWindow(QMainWindow):
     
     def __init__(self):
@@ -279,12 +357,17 @@ class MainWindow(QMainWindow):
             "volume": 1.0,
     
         }
-        
+
+        username = getpass.getuser()
 
         if os.path.exists(self.SETTINGS_FILE):
             
             with open(self.SETTINGS_FILE, "r") as f:
                 settings = json.load(f)
+
+            if "username" not in settings.keys():
+                settings["username"] = username
+
                 
         else:
             
@@ -298,6 +381,7 @@ class MainWindow(QMainWindow):
             settings["default_output_info"] = output_device_info
             settings["default_output"] = default_output
             settings["default_input"] = default_input
+            settings["username"] = username
             
 
         pygame.mixer.init()
@@ -324,16 +408,21 @@ class MainWindow(QMainWindow):
         self.scroll_area.setWidgetResizable(True)
         self.scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
-        
-        
-        #self.layout.addLayout(self.grid)
+
+        self.welcome_label = QLabel(f"Welcome {self.settings["username"]}!")
+        welcome_font = self.welcome_label.font()
+        welcome_font.setPointSize(30)
+        self.welcome_label.setFont(welcome_font)
+
+        self.layout.addWidget(self.welcome_label)
+
         self.load_sounds()
         self.scroll_area.setWidget(self.content_widget)
         self.layout.addWidget(self.scroll_area)
         
-        layout_widget = QWidget()
-        layout_widget.setLayout(self.layout)
-        self.setCentralWidget(layout_widget)
+        self.layout_widget = QWidget()
+        self.layout_widget.setLayout(self.layout)
+        self.setCentralWidget(self.layout_widget)
 
         self.setMinimumSize((QSize(1100, 450)))
         self.setMaximumSize(QSize(1200, 1000))
@@ -376,14 +465,14 @@ class MainWindow(QMainWindow):
         volume_label = QLabel("Volume    ")
         toolbar.addWidget(volume_label)
         
-        volume_slider = QSlider(Qt.Orientation.Horizontal)
-        volume_slider.setRange(1, 100)
-        volume_slider.setSingleStep(1)
-        volume_slider.setValue(self.settings["volume"])
-        volume_slider.setFixedWidth(250)
-        volume_slider.valueChanged.connect(self.set_volume)
+        self.volume_slider = QSlider(Qt.Orientation.Horizontal)
+        self.volume_slider.setRange(1, 100)
+        self.volume_slider.setSingleStep(1)
+        self.volume_slider.setValue(self.settings["volume"]*100)
+        self.volume_slider.setFixedWidth(250)
+        self.volume_slider.valueChanged.connect(self.set_volume)
         
-        toolbar.addWidget(volume_slider)
+        toolbar.addWidget(self.volume_slider)
         
         
     def set_volume(self, value):
@@ -398,7 +487,34 @@ class MainWindow(QMainWindow):
             self.grid.itemAt(i).widget().setParent(None)
 
         if not os.path.exists(self.sounds_path):
+
             os.makedirs(self.sounds_path)
+
+            no_files_label = QLabel("Looks like we don't have any files yet. Click 'Add File(s)' to add some sounds!")
+
+            font = no_files_label.font()
+            font.setPointSize(15)
+
+            no_files_label.setFont(font)
+            self.grid.addWidget(no_files_label)
+            
+
+            return
+        
+        if not os.listdir(self.sounds_path):
+        
+            no_files_label = QLabel("Looks like we don't have any files yet. Click 'Add File(s)' to add some sounds!")
+
+            font = no_files_label.font()
+            font.setPointSize(15)
+
+            no_files_label.setFont(font)
+            self.grid.addWidget(no_files_label)
+            
+
+            return
+
+   
 
         files = [f for f in os.listdir(self.sounds_path) if f.endswith(('.wav', '.mp3'))]
 
@@ -468,8 +584,13 @@ class MainWindow(QMainWindow):
         
         
     def save_settings(self):
+            
+        try:    
             with open(self.SETTINGS_FILE, "w") as f:
-                json.dump(self.settings, f, indent=4)
+                json.dump(self.settings, f, indent=4) 
+
+        except Exception as e:
+            QMessageBox.warning(self, f"Error", "Unable to save settings, see: {e}")
                 
                 
     def play_sound(self, path, volume_level = 1.0):
