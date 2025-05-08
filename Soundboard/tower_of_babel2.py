@@ -181,7 +181,7 @@ class EditFiles(QWidget):
                     widget = item.widget()
 
                     if widget is not None:
-                        widget.setParent(None)  # Detach the widget from the layout
+                        widget.setParent(None) 
                         widget.deleteLater()
 
         except Exception as e:
@@ -338,7 +338,56 @@ class EditFiles(QWidget):
 
     
     def rename_sound(self, name):
-        print(name.text())
+        
+        self.window = QWidget()
+        self.window.resize(900,100)
+        self.window.setWindowTitle(f"Renaming: {name.text()}")
+        self.window.show()
+        
+        self.grid = QGridLayout()
+        self.window.setLayout(self.grid)
+        
+        self.sound_name_label = QLabel(f"Original Name: {name.text()} ")
+        self.rename_box = QLineEdit()
+        self.rename_box.setPlaceholderText("Enter new sound name here...")
+        
+        self.save_button = QPushButton("Save")
+        self.save_button.clicked.connect(lambda _, original = name: self.save_rename(original))
+        self.save_button.setFixedSize(70, 20)
+        
+        self.grid.addWidget(self.sound_name_label, 0, 0)
+        self.grid.addWidget(self.rename_box, 0, 1)
+        self.grid.addWidget(self.save_button, 1, 1, alignment = Qt.AlignmentFlag.AlignCenter)
+        
+    def save_rename(self, original):
+            
+        original_path = f"{self.main_app.sound_buttons[original.text()]["path"]}"
+        new_path = f"{self.main_app.sounds_path}/{self.rename_box.text()}.{original_path.split(".")[-1]}"
+        
+        try:
+            
+            if self.rename_box.text().strip() != '':
+                
+                os.rename(original_path, new_path)
+                self.main_app.sound_buttons[f"{self.rename_box.text()}"] = self.main_app.sound_buttons.pop(f"{original.text()}")
+            
+                self.main_app.load_sounds()
+            
+                QMessageBox.information(self, "Success!", f"Your sound '{original.text()}'  has been renamed to '{self.rename_box.text()}' ")
+                self.window.close()
+            
+                return self.load_sound_options()
+            
+            else:
+                QMessageBox.information(self, "Nothing Entered", "Nothing has been entered in the box. If this was a mistake, please try again.")
+            
+        except Exception as e:
+            QMessageBox.warning(self, "Error", f"We were unable to rename your file, see: {e}")
+            
+            
+        self.load_sound_options()
+            
+        
     
     
     def edit_sound_length(self, name):
