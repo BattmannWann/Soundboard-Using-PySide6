@@ -1,6 +1,24 @@
 import sounddevice as sd
 import os
 import subprocess
+from mutagen import File as MutagenFile
+import soundfile as sf
+
+audio_files = [f"Soundboard/sounds/{file}" for file in os.listdir('Soundboard/sounds')]
+
+print(audio_files)
+# audio_files[0].info.length = 0.2
+
+print()
+print(audio_files[5])
+
+data, samplerate = sf.read(audio_files[5])
+
+print(len(data))
+
+sd.play(data = data, samplerate=samplerate, device = 6)
+sd.wait()
+#sd.play(audio_files[0].info.path, device=6)
 
 # List all available devices
 #print(sd.query_devices())

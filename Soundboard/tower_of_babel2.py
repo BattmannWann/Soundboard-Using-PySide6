@@ -315,6 +315,11 @@ class EditFiles(QWidget):
         warning_msg = QMessageBox.question(self, "Confirm", f"Are you sure that you want to delete {name.text()}?", 
                                            QMessageBox.Cancel | QMessageBox.Yes)
         
+        ok_box = QMessageBox(self)
+        ok_box.setWindowTitle("Success!")
+        ok_box.setText(f"{name.text()} has been successfully deleted.")
+        ok_box.setStandardButtons(QMessageBox.Ok)
+        
         try:
 
             if warning_msg == QMessageBox.Yes:
@@ -322,19 +327,15 @@ class EditFiles(QWidget):
                 print(f"Removing {self.main_app.sound_buttons[name.text()]["path"]}...")
                 os.remove(self.main_app.sound_buttons[name.text()]["path"])
                 self.main_app.sound_buttons.pop(name.text())
+
+                ok_box.exec()
+
+                self.main_app.load_sounds()
+                self.load_sound_options()
         
         except Exception as e:
             print("Error, looks like something went wrong: {e}")
             return
-
-        ok_box = QMessageBox(self)
-        ok_box.setWindowTitle("Success!")
-        ok_box.setText(f"{name.text()} has been successfully deleted.")
-        ok_box.setStandardButtons(QMessageBox.Ok)
-        ok_box.exec()
-
-        self.main_app.load_sounds()
-        self.load_sound_options()
 
     
     def rename_sound(self, name):
@@ -387,8 +388,6 @@ class EditFiles(QWidget):
             
         self.load_sound_options()
             
-        
-    
     
     def edit_sound_length(self, name):
         print(name.text())
