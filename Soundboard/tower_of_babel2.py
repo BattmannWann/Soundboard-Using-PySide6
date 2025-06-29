@@ -24,6 +24,8 @@ from PySide6.QtWidgets import (
     
 )
 
+from superqt import QDoubleRangeSlider
+
 import sys, os, json, threading, random
 import pygame
 import sounddevice as sd
@@ -132,9 +134,6 @@ class Settings(QWidget):
             QMessageBox.warning(self, "Error", f"Unable to save settings, see: {e}")
 
         
-
-
-        
     def closeEvent(self, event):
         self.main_app.show()
         return super().closeEvent(event)
@@ -185,6 +184,8 @@ class EditFiles(QWidget):
                         widget.deleteLater()
 
         except Exception as e:
+            
+            print(f"Unable to reload: {e}")
 
             pass
 
@@ -268,7 +269,7 @@ class EditFiles(QWidget):
             edit_sound_length_button = QPushButton()
             edit_sound_length_button.setIcon(QIcon(f"{self.main_app.icons_path}/radio--pencil"))
             edit_sound_length_button.setStatusTip("Modify Sound Length/Segment")
-            edit_sound_length_button.clicked.connect(lambda _, name = sound_name: self.edit_sound_length(name))
+            edit_sound_length_button.clicked.connect(lambda _, name = sound_name, len =  duration: self.edit_sound_length(name, len))
             edit_sound_length_button.setFixedSize(70, 20)
             edit_sound_length_button.setStyleSheet("margin-right: 5px;")
             
@@ -334,8 +335,13 @@ class EditFiles(QWidget):
                 self.load_sound_options()
         
         except Exception as e:
-            print("Error, looks like something went wrong: {e}")
-            return
+            
+            not_ok_box = QMessageBox(self)
+            not_ok_box.setWindowTitle("ERROR")
+            not_ok_box.setText(f"There has been an error deleting {name}, see: {e}")
+            not_ok_box.setStandardButtons(QMessageBox.Ok)
+            
+            not_ok_box.exec()
 
     
     def rename_sound(self, name):
@@ -376,6 +382,8 @@ class EditFiles(QWidget):
             
                 QMessageBox.information(self, "Success!", f"Your sound '{original.text()}'  has been renamed to '{self.rename_box.text()}' ")
                 self.window.close()
+                
+                self.load_sound_options()
             
                 return self.load_sound_options()
             
@@ -389,8 +397,198 @@ class EditFiles(QWidget):
         self.load_sound_options()
             
     
-    def edit_sound_length(self, name):
-        print(name.text())
+    def edit_sound_length(self, name, duration):
+        
+        self.window = QWidget()
+        self.window.setFixedSize(600, 80)
+        self.window.setWindowTitle(f"Editing Length of  sound '{name.text()}'")
+        self.window.show()
+        
+        self.grid = QGridLayout()
+        self.window.setLayout(self.grid)
+        
+        self.trimmed_sounds = {}
+        self.previewed = False
+        
+        self.length = float(duration.text()[:len(duration.text())-1])
+        self.curr_len_label = QLabel(f"Length of {name.text()}: {duration.text()}")
+        
+        self.length_slider = QDoubleRangeSlider(Qt.Orientation.Horizontal)
+        self.length_slider.setFixedSize(60,20)
+        self.length_slider.valueChanged.connect(self.length_slider_val_changed)
+        
+        if self.length < 1:
+            
+            error_message = QMessageBox.warning(self, "Sound too short", "Sounds less than 1s are unable to be modified.", buttons = QMessageBox.Ok)
+            return
+            
+            
+        else:
+            
+            self.length_slider.setSingleStep(0.1)
+            self.len_slider_label = QLabel("1s")
+            
+            self.length_slider.setRange(1.0, self.length)
+            
+        
+        self.preview_button = QPushButton("Preview Sound")
+        self.preview_button.clicked.connect(lambda _, name = name.text(), slider = self.length_slider: self.preview_sound(name, slider))
+        
+        self.save_length_button = QPushButton("Save")
+        self.save_length_button.clicked.connect(lambda _, name = name.text(): self.save_length(name))
+        
+        self.revert_sound_button = QPushButton("Revert Sound")
+        self.revert_sound_button.clicked.connect(lambda _, name = name.text(): self.revert_sound(name))
+        
+        self.grid.addWidget(self.preview_button, 0, 0, Qt.AlignmentFlag.AlignLeft)
+        self.grid.addWidget(self.curr_len_label, 0, 0, Qt.AlignmentFlag.AlignRight)
+        self.grid.addWidget(self.length_slider, 0, 1, Qt.AlignmentFlag.AlignLeft)
+        self.grid.addWidget(self.len_slider_label, 0, 1, Qt.AlignmentFlag.AlignCenter)
+        self.grid.addWidget(self.save_length_button, 1, 1, Qt.AlignmentFlag.AlignRight)
+        self.grid.addWidget(self.revert_sound_button, 1, 0, Qt.AlignmentFlag.AlignRight)
+        
+        
+        
+    def length_slider_val_changed(self, value):
+        
+        print(f"Value is: {value[0]} - {value[1]}")
+        self.len_slider_label.setText(f"Between {round(value[0], 2)}s and {round(value[1], 2)}s")
+        
+    def preview_sound(self, name, slider):
+        
+        """ 
+        Each sound has been stored as a numpy array. This, using this knowledge we can splice the sound array to edit its length as follows:
+        
+            - Each row in the data array is ONE AUDIO FRAME.
+            - The number of frames per second is determined by the SAMPLERATE
+            - Thus, to trim our audio, we do 
+            
+                trimmed_length = samplerate * number_of_seconds
+                trimmed_data = data[:trimmed_data]
+                
+            - So, if we want the first 5 seconds, substitute 'number_of_seconds' with 5. 
+            
+            - Here, we have a double handled slider, so we can splice using a start and stop value
+            
+                trimmed_start = samplerate * handle_1
+                trimmed_end = samplerate * handle_2
+                
+                trimmed_sound = data[trimmed_start:trimmed_end]
+        """
+        
+        self.preview_button.setDisabled(True)
+        self.length_slider.setDisabled(True)
+        
+        self.previewed = True
+        
+        self.trim_sound(name, slider)
+            
+        self.preview_button.setDisabled(False)
+        self.length_slider.setDisabled(False)
+        
+    
+    def trim_sound(self, name, slider):
+        
+        print(f"This is {name}")
+        
+        file_path = self.main_app.sound_buttons[name]["path"]
+        print(file_path)
+        
+        device = self.main_app.settings["default_input"]
+        data, samplerate = sf.read(file_path)
+        
+        handle_1 = int(slider.value()[0])
+        handle_2 = int(slider.value()[1])
+        
+        trimmed_start = samplerate * handle_1
+        trimmed_end = samplerate * handle_2
+        
+        if self.previewed == True:
+        
+            try:
+                sd.play(data = data[trimmed_start: trimmed_end], samplerate = samplerate, device = device)
+                sd.wait()
+                
+            except Exception as e:
+                print(f"Whoops, something went wrong: {e}")
+            
+        self.trimmed_sounds[name] = {"trimmed_data": data[trimmed_start:trimmed_end], "samplerate": samplerate}
+               
+    
+    def save_length(self, name):
+        
+        ok_box = QMessageBox(self)
+        ok_box.setWindowTitle("Success!")
+        ok_box.setText(f"{name} has been successfully modified.")
+        ok_box.setStandardButtons(QMessageBox.Ok)
+        
+        warning_msg = QMessageBox.question(self, "Confirm", 
+        f"This action will not modify {name}, but make a copy that will then become the default for this sound. You may revert this at any time. Do you wish to proceed? ",
+        QMessageBox.Cancel | QMessageBox.Yes)
+        
+        if self.previewed == False:
+            
+            self.trim_sound(name, self.length_slider)
+            print("Trimmed")
+        
+        try: 
+            if warning_msg == QMessageBox.Yes:
+                
+                print("Saving modified sound...")
+                sf.write(f"trimmed_sounds/{name}.mp3", self.trimmed_sounds[name]["trimmed_data"], self.trimmed_sounds[name]["samplerate"])
+                
+                self.main_app.sound_buttons[name]["path"] = f"trimmed_sounds/{name}.mp3"
+                ok_box.exec()
+                
+                self.close()
+                self.window.close()
+                
+                self.main_app.load_sounds()
+                self.load_sound_options()
+                
+                
+        except Exception as e:
+            
+            not_ok_box = QMessageBox(self)
+            not_ok_box.setWindowTitle("Error")
+            not_ok_box.setText(f"There has been an error updating {name}, see: {e}")
+            not_ok_box.setStandardButtons(QMessageBox.Ok)
+            
+            not_ok_box.exec()
+            
+            
+    def revert_sound(self, name):
+        
+        warning_msg = QMessageBox.question(self, "Confirm", 
+        f"This will revert the sound back to its original form. Are you certain?",
+        QMessageBox.Cancel | QMessageBox.Yes)
+        
+        ok_box = QMessageBox(self)
+        ok_box.setWindowTitle("Success!")
+        ok_box.setText(f"{name} has been successfully deleted.")
+        ok_box.setStandardButtons(QMessageBox.Ok)
+        
+        try:
+            
+            if warning_msg == QMessageBox.Yes:
+                
+                os.remove(f"{self.main_app.trimmed_sounds_path}/{name}.mp3")
+                ok_box.exec()
+                
+                self.main_app.load_sounds()
+                self.load_sound_options()
+                
+        except Exception as e:
+            
+            not_ok_box = QMessageBox(self)
+            not_ok_box.setWindowTitle("ERROR")
+            not_ok_box.setText(f"There has been an error reverting {name}, this sound likely hasn't been modified yet. \n\nFor additional errors see: {e}")
+            not_ok_box.setStandardButtons(QMessageBox.Ok)
+            
+            self.window.close()
+            
+            not_ok_box.exec()    
+            
                
                   
 class MainWindow(QMainWindow):
@@ -436,6 +634,7 @@ class MainWindow(QMainWindow):
         
         self.icons_path = "media/images"
         self.sounds_path = "sounds"
+        self.trimmed_sounds_path = "trimmed_sounds"
         self.sound_buttons = {}
         self.settings = settings
         self.save_settings()
@@ -565,11 +764,17 @@ class MainWindow(QMainWindow):
    
 
         files = [f for f in os.listdir(self.sounds_path) if f.endswith(('.wav', '.mp3'))]
+        trimmed_file_options = [f for f in os.listdir(self.trimmed_sounds_path) if f.endswith((".wav", ".mp3"))]
 
         for idx, file in enumerate(files):
             
             name = os.path.splitext(file)[0]
-            path = os.path.join(self.sounds_path, file)
+            
+            if file in trimmed_file_options:
+                path = os.path.join(self.trimmed_sounds_path, file)
+            
+            else:
+                path = os.path.join(self.sounds_path, file)
             
             try:
                 audio = MutagenFile(path)
