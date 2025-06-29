@@ -194,6 +194,9 @@ class EditFiles(QWidget):
             
         self.emoji = QLabel("Emoji")
         self.emoji.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+
+        self.emoticons_list = os.listdir(f"{self.main_app.icons_path}")
+        print(self.emoticons_list)
             
         self.sound_name = QLabel("Name")
         self.sound_name.setAlignment(Qt.AlignmentFlag.AlignHCenter)
@@ -247,7 +250,13 @@ class EditFiles(QWidget):
             sound_name.setAlignment(Qt.AlignmentFlag.AlignHCenter)
             
             emoji = QLabel()
-            emoji.setPixmap(QPixmap(f"{self.main_app.icons_path}/angry.png").scaled(40,40))
+
+            if f"{sound_name}.png" in self.emoticons_list:
+                emoji.setPixmap(QPixmap(f"{self.main_app.icons_path}/{key}.png").scaled(40,40))
+
+            else:
+                emoji.setPixmap(QPixmap(f"{self.main_app.icons_path}/angry.png").scaled(40,40))
+
             emoji.setAlignment(Qt.AlignmentFlag.AlignHCenter)
             
             duration = QLabel(f"{value["duration"]}s")
