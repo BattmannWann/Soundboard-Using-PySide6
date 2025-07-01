@@ -157,7 +157,7 @@ This section will go into explicit detail as to what each method within each cla
 
 ### 2.1 Methods in the Settings Class
 
-#### 2.1.1 __init__()
+#### 2.1.1 __init__(main_app)
 
 The class constructor initialises the settings window and closes the main window to prevent the screen from getting too crowded. In this initialisation, it will add the following to the screen:
 
@@ -178,7 +178,7 @@ The class constructor initialises the settings window and closes the main window
     - A save button to allow the user to permanently change the application's settings. This is achieved through reading and writing to a JSON file called `settings.json`
 
     - To access the occurrence of MainWindow, it has been passed as an argument when creating the Settings class. This way any relevant variables and methods can be accessed and called. Thus, calling a method within the MainWindow class will appropriately make the changes required.
-    This has been stored in a variable called `main_app`.
+    This has been stored in a variable called `main_app`. **The argument passed is also called main_app**
 
 
 #### 2.1.2 save()
@@ -194,22 +194,286 @@ After such, a window is then presented to the user to assert that the changes ha
 To prevent error, the user may press save without changing any settings, where the app will simply do nothing when no changes have been made. 
 
 
-#### 2.1.3 closeEvent()
+#### 2.1.3 closeEvent(event)
 
 This method is an override of PySide6's closeEvent() method defined for its classes (specifically this is for the QWidget class). This provides additional control over what the system should do when a window is closed. Default `closeEvent()` will handle the control back over to the main window (or to whatever window it's predecessor was when looking at the stack chain). 
 
-Here, it is configured to ensure that the main window is reshown as once it is hidden it needs to be explicitly called with `.show()`. It then calls the super class (QWidget) and calls its `closeEvent()` method such that the original functionality is then implemented correctly. 
+Here, it is configured to ensure that the main window is re-shown as once it is hidden it needs to be explicitly called with `.show()`. It then calls the super class (QWidget) and calls its `closeEvent()` method such that the original functionality is then implemented correctly. This is achieved using the passed in argument `event` which ensures that the main method version closes the correct event occurrence. 
 
 
 ### 2.2 Methods in the EditFiles Class
 
-#### 2.2.1 __init__()
+#### 2.2.1 __init__(main_app)
 
-The constructor for this class hides the main application's window and then displays another. This other window is contained within a grid layout that features a scrollable area for when the sounds get larger than the amount that can be displayed within the 1300 x 800 window. Displaying the sounds available are handled by the class' `load_sound_options` function. 
+This constructor takes in as an argument `main_app` which is the reference to the `MainWindow` instance. 
+
+The constructor for this class hides the main application's window and then displays another. This other window is contained within a grid layout that features a scrollable area for when the sounds get larger than the amount that can be displayed within the 1300 x 800 window. Displaying the sounds available are handled by the class' `load_sound_options()` function. 
 
 The reason that this logic has been abstracted is such that when sounds are modified these changes are reflected in the window. Simply, the method can be called again whenever a change has been made. 
 
-The only other notable segment of this method is the `button_to_options_mapping()` variable.
+The only other notable segment of this method is the `button_to_options_mapping()` variable. This is a dictionary that maps each sound to its corresponding option buttons as seen on screen. This is updated at the loop found in the `load_sound_options()` method. 
+
+
+#### 2.2.2 closeEvent(event)
+
+This is implemented in the same way as it is in Settings (see 2.1.3).
+
+
+#### 2.2.3 load_sound_options()
+
+This is the main method of this class that loads all sounds available in the sound board, listing:
+
+    - Their associated emoji/picture
+    - The duration of the sound
+    - Options for each sound; deletion, renaming, and editing the duration
+
+As such the table headings are **Emoji**, **Name**, **Duration** and **Options**.
+
+The sounds are formatted into a table, which has been achieved by using a grid layout. FIrstly, this method determines whether the grid has been initiated, if so, it removes any widgets found. This functionality has been implemented to account for changes to the sound options; every time there is a deletion, a change of name, or change of length, the window needs to correctly display the amendments. However, with so many elements, it becomes hard to update accordingly as this would require locating the widget within the grid and updating its contents. In solving this problem, this method was the easiest and most efficient way to ensure that the table remains up to date. 
+
+The sounds themselves have been placed into a scrollable area to ensure that the space is used wisely. 
+
+Another notable section here are the vertical and horizontal line separators. Unfortunately, the same widget cannot be added to a layout more than once, and thus, more than one variable has to be created. To ensure that the DRY principle has been adhered to, the creation of vertical and horizontal separators was abstracted into a method that returns the appropriate widget. These variables ensure that the table structure is made visible to the user, aiding in readability. 
+
+The for loop utilises a dictionary from the main app which contains records of every sound available in the application. Each key corresponds to the name of a sound and its values holding the relevant information; in this case all it needs is the sound's duration. 
+
+In every iteration a remove, rename, and edit button are created and added to the current row. To ensure that each sound is mapped correctly to each button, this is where the `button_to_options_mapping` dictionary comes into play. 
+
+Lastly, to appropriately add each widget in the correct grid line, there is an iterated variable `curr_grid` which increments in each iteration. This is simple, but ensures that each widget is placed on a different line each time. 
+
+
+#### 2.2.4 create_vertical_separator()
+
+This widget comes from `QFrame()` which can be customised to set orientation, shadow and colour accoridngly. To stretch the frame over all the columns, in `load_sound_options()` the `addWidget()` method which is apart of the layout allows for negative indices that indicate it should stretch over the whole layout space. Each vertical separator has been placed accordingly between each widget, orientated using the `alignment` argument. 
+
+
+#### 2.2.5 create_horizontal_separator() 
+
+This widget is implemented the exact same way as 2.2.4 but in `.setFrameShape()` QFrame.HLine is used instead of QFrame.VLine. It is implemented in the same way into the layout as well. 
+
+
+#### 2.2.6 delete_sound(name)
+
+This method takes in as an argument the name of the sound such that any reference required uses the correct name, without additional calls being made; the title of the window uses the sound's name, for instance. 
+
+This method implements the functionality for the delete button, found in the options section. When clicked on, the user is immediately greeted with a warning pop-up, prompting the user to confirm that they actually want to delete the sound. If so, they need to press "Yes". This uses the operating system to remove the sound from the folder, wrapped in a try-except block to ensure that if any errors occur the user is prompted and given an appropriate error message to explain why. 
+
+
+#### 2.2.7 rename_sound(name)
+
+Takes in the name of the sound as an argument. This ensures that any reference for the name of the sound is correct. 
+
+This method opens another window, that allows the user to enter the new name they wish to provide for the given sound. As before, if the user presses save without entering anything into the text box, then the sound remains unchanged. This is the same if the user presses cancel. **Only** if the user enters valid text and presses save will the sound be renamed. 
+
+This logic is again wrapped in a try-except block to ensure that if any errors occur, the user is informed accordingly. 
+
+The save logic is detailed in the method `save_rename()`.
+
+
+#### 2.2.8 save_rename(original)
+
+This method takes in as an argument the original name for the sound, such that the following is possible:
+
+    The path of the sound is retrieved from the main app's `sound_buttons` dictionary, such that the operating system can correctly identify the sound and rename it on the system itself. This ensures that the change is permanent. 
+
+On a successful or unsuccessful operation, the user is prompted by a pop-up box to inform them accordingly, as the logic is wrapped within a try-except block. 
+
+On a successful operation, both the `main_app.load_sounds()` and `load_sound_options()` methods are called to ensure that the application then displays the changes everywhere. 
+
+The rename window is then closed at the end. 
+
+
+#### 2.2.9 edit_sound_length(name, duration)
+
+The taken arguments are name (to ensure the sound can be referenced) and duration to display appropriately the duration of the sound (along with constraints on how the length of the sound can be changed).
+
+This method creates a new window to display the name of the sound the user is editing, and a double handled slider to allow the user to select the segment of the sound they want to keep. 
+
+After adjusting the sliders, the user can preview the segment of the sound they have selected. 
+
+On pressing save, the sound is saved as a copy to ensure that if the user later wants to revert the sound back to its original state then this is made possible. This logic is handled by creating a sound with the same name into the `trimmed_sounds/` directory. When the logic in the main application iterates over the sounds directory, it will first check if the sound with the same name exits in `trimmed_sounds/`. If so, then this version takes priority and is loaded in instead. This however, only happens on application start. To ensure that the changes take immediate effect, the path value is modified for the key of the sound in the `main_app.sound_buttons` dictionary. This will make more sense as to why when understanding the logic of `2.3.3` and of `2.3.9`. 
+
+Before loading the window, the sound is checked to be lesser than one second. If it is, then a warning pop-up box is displayed to the user to inform them that editing a sound that is less than one second is prohibited as there are not enough audio frames to perform such an action - it doesn't make much sense as the user wouldn't get much benefit from it. 
+
+If the sound's duration is greater than one, then the slider step is set to 0.1s and the range of the slider set from 1.0s to the duration of the sound. 
+
+To revert the sound back to its original, the revert button can be found in this same window. 
+
+
+#### 2.2.10 length_slider_val_changed(value)
+
+As an argument, the value is passed by the `.connect` method to ensure proper handling. 
+
+This method implements the logic that whenever the slider is changed the value in the label to indicate where the audio segment is, is changed. This value is rounded to 2 decimal places as any further are irrelevant to the user. 
+
+
+#### 2.2.11 preview_sound(name, slider)
+
+This method takes the name of the sound and the slider object instance as arguments. The name ensures that the sound can be referenced and found properly, and the slider object instance ensures that its current values can be obtained. 
+
+The method also contains a doc string to explain some of the more complicated logic that may not be clear on first glance. To avoid wasting time, here is the information presented:
+
+``` 
+
+    Each sound has been stored as a numpy array. This, using this knowledge we can splice the sound array to edit its length as follows:
+        
+        - Each row in the data array is ONE AUDIO FRAME.
+        - The number of frames per second is determined by the SAMPLERATE
+        - Thus, to trim our audio, we do 
+            
+            trimmed_length = samplerate * number_of_seconds
+            trimmed_data = data[:trimmed_data]
+                
+        - So, if we want the first 5 seconds, substitute 'number_of_seconds' with 5. 
+            
+        - Here, we have a double handled slider, so we can splice using a start and stop value
+            
+            trimmed_start = samplerate * handle_1
+            trimmed_end = samplerate * handle_2
+                
+            trimmed_sound = data[trimmed_start:trimmed_end]
+
+```
+
+Contained within this method is additional logic to disable the buttons present on the window, such that when the sound is playing, the logic doesn't try and subsume the current actions. This prevents errors from occurring also. 
+
+This method doesn't actually play the sound however, and simply serves as a support function to avoid errors and aid `trim_sound()`. 
+
+
+#### 2.2.12 trim_sound(name, slider)
+
+This method takes as arguments name, and slider which have been explained in `preview_sound()` and have been taken directly from this method. This is where the logic described in the docstring of `preview_sound()` is implemented, and if the preview sound button has been pressed, then the audio will be played as part of this function. 
+
+This decision was taken to prevent repetition of code. To play the sound, the data needs to be spliced, and to save the modification of the sound the data also needs to be sliced. This is where the `previewed` variable flag initialised in `edit_sound_length()` becomes relevant. If it is set to true, then preview sound has been pressed and the sound needs to be played. Otherwise, the data just needs to be spliced. 
+
+Once the data has been spliced, it is saved in the `trimmed_sounds` dictionary found in `edit_sound_length()`. This way, if the user decides to save the modified version of the sound, then the data is there to be written. Otherwise, when the method exits, the data is lost, ensuring memory space is not being wasted. 
+
+
+#### 2.2.13 save_length(name)
+
+Takes as an argument the name of the sound to ensure proper referencing of the sound being modified. 
+
+This method prompts the user with a pop-up box to refer the state of the operation. If successful or not, the user will be greeted with the appropriate information depending on the outcome. This is handled by a try-except block. 
+
+
+#### revert_sound(name)
+
+This method takes in as an argument the name of the sound to ensure that proper referencing and finding of the sound is possible. 
+
+Under a try-except block, the user will be prompted with a success or failure method depending on successful/unsuccessful operation. 
+
+On a successful operation, the sound is found in the `trimmed_sounds/` directory and deleted. Then, the main application window and the edit files window sound options are updated to reflect this change. 
+
+
+### 2.3 Methods in the MainWindow Class
+
+#### 2.3.1 __init__()
+
+This is the core of the application. The constructor essentially sets up the entire application. To ease reading, here is what is achieved (within relevance):
+
+    - The settings are retrieved from the `settings.json` file and stored in the `settings` dictionary; ONLY IF `settings.json` exists, otherwise a set of default settings are stored in the dictionary instead. 
+
+    - The username of the user is retrieved using `getpass` and stored in the settings dictionary.
+
+    - The overall layout used is a box layout, that contains a grid, and a scroll area within the grid. This allows a layout hierarchy. 
+
+    - The sounds are loaded and formatted correctly using the `load_sounds()` method (see 2.3.3)
+
+    - The toolbar is created and relevant buttons associated with the methods to implement them
+
+    - The appearance of the window is also configured here (window title, size, visual separators, etc...)
+
+
+#### 2.3.2 set_volume(value)
+
+The argument passed here, value, is the value of the slider at the point in time that it has been moved (if the slider was moved to value 50, then 50 is passed into the method). This logic is used whenever a change is detected. 
+
+The volume value is stored in the settings dictionary. The value stored is divided by 100 as the logic to actually change the volume of a sound requires the value to be a fraction. To see what actually happens, see `2.3.9`
+
+As the sounds are being modified directly, the `load_sounds()` method needs to be called such that when the sound is played, the desired outcome is achieved. 
+
+
+#### 2.3.3 load_sounds()
+
+This method initialises by clearing all sounds in the grid at that moment. This is to implement any changes made to the sounds during the run-time of the application. 
+
+Next, if the directory to hold the sounds doesn't exist, then it is created by the app, and an appropriate display message is shown to the user to prompt them to add sound files using the `add_files` button in the toolbar. Similar logic is used when there are no files in the directory. The directory could have been created, but if the application is restarted, then the same message needs to be displayed to the user. 
+
+The for loop of this method initialises/formats all of the sound files. It achieves the following:
+
+    - Creates the name of the sound file by splitting the relative path and taking only the first part (for example of a file called 'Sound.mp3', the name is then 'Sound')
+
+    - If the name of the file exists in the `trimmed_sounds` directory, then this version is used over the original (due to the request of the user modifying the sound's duration)
+
+    - Other details of the file are then collated; this includes duration, and an image
+
+    - A button is created for the sound, placing on it the name of the sound (up to a maximum of 40 characters for space reasons) and is associated with the appropriate data for its method; the path of the sound, and the volume of the sound is passed through to the method on creation, such that when it is called, the information is already there. 
+
+    - The button is then placed on the grid in groups of two
+
+    - Lastly, a record of the button is stored in the `sound_buttons` dictionary. This dictionary has the following values: `path`, `emoji_path`, and `duration`.
+
+
+
+#### 2.3.4 add_files()
+
+This implements the functionality of adding files to the soundboard. It does this by utilising the file browser of the device, allowing the user to add multiple files at once. However, it is restricted to `.mp3` and `.wav` files only. 
+
+After any files have been added, the `load_sounds()` method is then called to display the added files to the soundboard. 
+
+
+#### 2.3.5 edit_files()
+
+This links the edit files button on the toolbar to its relevant class. This will create the class object and show the window the the user. The rest of the implementation details can then be found following section `2.2`.
+
+
+#### 2.3.6 settings_config()
+
+This links the settings button on the toolbar to its relevant class. This will create the settings class object and then show the window to the user. The rest of the implementation details can then be found in section `2.1`
+
+
+#### 2.3.7 stop_sounds()
+
+This method implements the logic for the `Stop Sounds` button found in the toolbar. 
+
+This will simply stop playing any sound that is currently playing at that moment in time. 
+
+
+#### 2.3.8 save_settings()
+
+This method allows the settings altered by the user to be written to the json file for permanence. 
+
+If there is an issue when this method is called, the user is greeted with an error pop-up box with relevant error details. 
+
+
+#### 2.3.9 play_sound(path, volume_level = 1.0)
+
+Passed to this method is the path for the sound and the volume level for said sound (by default this is set to full volume if no preference exists). 
+
+This method is implemented through a sub-method within it, called `_play`. 
+
+To have the sound play both through the default input and output, this function utilises threads, which is why there is a need of a sub-method. When each thread is called, `_play` is executed. 
+
+`_play`'s logic is wrapped within a try-execute block that will produce an error message if something goes wrong. This is useful to let the user know that there has been a problem with playing a sound through one of their chosen audio channels. 
+
+
+#### 2.3.9 closeEvent(event)
+
+Like the previous `closeEvent()` overrides, this method is passed the relevant event such that after any personalisation is achieved, the real method handles the closing logic properly. 
+
+The addition here is that when the main window is closed, any sound that is currently playing is stopped. 
+
+
+---
+
+## 3. Imports and Libraries
+
+This section will go into detail on the libraries and imports that have been chosen. 
+
+
+
+
+
 
 
 

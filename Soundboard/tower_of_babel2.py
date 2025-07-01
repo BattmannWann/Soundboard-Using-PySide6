@@ -27,7 +27,6 @@ from PySide6.QtWidgets import (
 from superqt import QDoubleRangeSlider
 
 import sys, os, json, threading, random
-import pygame
 import sounddevice as sd
 import soundfile as sf
 import shutil
@@ -398,7 +397,8 @@ class EditFiles(QWidget):
             QMessageBox.warning(self, "Error", f"We were unable to rename your file, see: {e}")
             
             
-        self.load_sound_options()
+        finally:
+            self.load_sound_options()
             
     
     def edit_sound_length(self, name, duration):
@@ -590,9 +590,10 @@ class EditFiles(QWidget):
             not_ok_box.setText(f"There has been an error reverting {name}, this sound likely hasn't been modified yet. \n\nFor additional errors see: {e}")
             not_ok_box.setStandardButtons(QMessageBox.Ok)
             
+            not_ok_box.exec()  
+
+        finally:
             self.window.close()
-            
-            not_ok_box.exec()    
             
                
                   
@@ -634,8 +635,6 @@ class MainWindow(QMainWindow):
             settings["default_input"] = default_input
             settings["username"] = username
             
-
-        pygame.mixer.init()
         
         self.icons_path = "media/images"
         self.sounds_path = "sounds"
@@ -837,7 +836,7 @@ class MainWindow(QMainWindow):
 
     def stop_sounds(self):
         print("Stopping sound(s)")
-        pygame.mixer.stop()
+        
         sd.stop()
         
         
@@ -867,16 +866,13 @@ class MainWindow(QMainWindow):
             except Exception as e:
                 print(f"Error playing sound on device {device}: {e}\n")
 
-        # if not self.settings["multi_play"]:
-        #     pygame.mixer.stop()
-        #     sd.stop()
 
         threading.Thread(target=_play, args=(self.settings["default_input"],)).start()
         threading.Thread(target=_play, args=(self.settings["default_output"],)).start()
         
         
     def closeEvent(self, event):
-        pygame.mixer.stop()
+        
         sd.stop()
         return super().closeEvent(event)
 
