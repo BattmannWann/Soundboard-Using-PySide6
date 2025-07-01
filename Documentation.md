@@ -2,6 +2,7 @@
 
 ### Written and Maintained by Rhys Stewart
 
+---
 
 ## Preface
 
@@ -10,6 +11,8 @@ segment of the codebase, such that any possible discrepancy or misunderstanding 
 
 Since the codebase is quite large, I feel it important to have produced this document to help lessen the load. Having to read thousands of lines of code is very cumbersome, 
 even if the code is well written. 
+
+---
 
 
 ## What to expect
@@ -25,6 +28,7 @@ Regarding how to use the soundboard itself, please refer to the [User Guide]().
 
 I will format this documentation such that you may use the links provided in the contents section to navigate through this document quickly. Copies of this may also be found in the wiki, however, I myself find it useful to have a copy in the code. 
 
+---
 
 ## Contents
 
@@ -102,3 +106,31 @@ I will format this documentation such that you may use the links provided in the
     5.1 Initialisation/Requirements
     5.2 Setup
     5.3 Using the CLI to run the soundboard
+
+---
+
+## 1. Classes
+
+### 1.1 Settings
+
+The first class covered here is **Settings**. Settings, as the name implies, allows the user to customise the soundboard
+to a certain extent. Settings allows the user to:
+
+    - Change the default input (audio device such as headphones or a speaker) and output (microphone device) 
+    - Change the default volume setting of sounds (this changes the actual volume of the sound and **NOT** the device volume)
+    - Change the displayed username
+
+Clicking on the settings button will open a new window and close the main window. If the user wishes not to alter the settings, on closing the window, the main window will automatically reopen. This is the same for saving the settings but first a confirmation box appears to alert the user whether their changes have been successful or not; in an unsuccessful case the box should display a helpful error message.
+
+
+### 1.2 EditFiles
+
+This class allows the user to view all the sounds available in the soundboard, and do the following:
+
+    - Edit the assigned emoji/picture
+    - Remove the sound
+    - Rename the sound
+    - Edit the sound's length
+
+
+
