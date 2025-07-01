@@ -7,3 +7,4 @@ Pillow
 json5
 pygame
 PySide6
+superqt
