@@ -110,24 +110,19 @@ class Settings(QWidget):
             self.main_app.settings["default_input"] = self.input_audio_option.currentIndex()
 
 
-            if self.default_volume.text().strip() == "":
-                self.main_app.settings["volume"] = self.main_app.settings["volume"]
+            if self.default_volume.text().strip() != "":
 
-            else:
                 self.main_app.settings["volume"] = float(self.default_volume.text())/100
                 self.main_app.volume_slider.setValue(self.main_app.settings["volume"]*100)
 
-            if self.username.text().strip() == "":
-                self.main_app.settings["username"] = self.main_app.settings["username"]
-
-            else:
+            if self.username.text().strip() != "":
 
                 self.main_app.settings["username"] = self.username.text()
                 self.main_app.welcome_label.setText(f"Welcome {self.username.text()}")
             
             self.main_app.save_settings()
 
-            QMessageBox.information(self, "Success!", "You settings have been saved successfully.")
+            QMessageBox.information(self, "Success!", "Your settings have been saved successfully.")
             self.close()
 
         except Exception as e:
@@ -429,6 +424,7 @@ class EditFiles(QWidget):
         if self.length < 1:
             
             error_message = QMessageBox.warning(self, "Sound too short", "Sounds less than 1s are unable to be modified.", buttons = QMessageBox.Ok)
+            self.window.close()
             return
             
             
