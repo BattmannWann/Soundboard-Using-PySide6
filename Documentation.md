@@ -98,13 +98,14 @@ I will format this documentation such that you may use the links provided in the
     4.4 requirements.txt
     4.5 media/
     4.6 sounds/
+    4.7 trimmed_sounds/
 
 
 5. How to run the soundboard using the Command Line Interface (CLI)
 
     5.1 Initialisation/Requirements
     5.2 Setup
-    5.3 Using the CLI to run the soundboard
+
 
 ---
 
@@ -558,10 +559,136 @@ As this is not a common import, see more details [here](https://mutagen.readthed
 ### 3.14 getpass
 The getpass module is used to securely retrieve the current user's login name. In this application, it is to simply retrieve the user's username. 
 
+---
+
+## 4. General Code
+
+This section is to cover any small segments of code/files that have not been handled by the previous sections. This section will be relatively small, but it is important to cover all bases. 
+
+
+### 4.1 Lines ... - ... in tower_of_babel2.py
+
+These lines are in the general scope of the program, which in a class based application such as this one, it may be referred to as the main program. 
+
+Here, the main application is initialised, creating a `MainWindow` instance and then executing the application to run and display it on the host's machine. 
+
+
+### 4.2 settings.json
+
+This file is responsible for the data permanence of user preference. Whenever a user alters a system setting, the configuration is stored in this file. 
+
+When read in python, this is converted to a dictionary with the following keys:
+
+    - volume
+    - default_input_info
+    - default_output_info
+    - default_output
+    - default_input
+    - username
+
+
+### 4.3 python_testing.py
+
+This file is kept simply for testing purposes. Sometimes when testing out a new feature it is much simpler to extract out the logic and test it on a small scale before integration. I will keep this file such that if another developer decides to develop the application further, a testing file already exists. 
+
+Therefore, this is solely a file for convenience. 
+
+
+### 4.4 requirements.txt
+
+This project has been configured to support the use of a virtual environment. Therefore, this text file contains all requirements for the application to run. 
+
+
+### 4.5 media/
+
+The `media/` directory contains ALL images/icons used in the application. 
+
+
+### 4.6 sounds/
+
+The `sounds/` directory holds ALL sound files used in the application. Whenever the user uploads sound files, this is where they are stored. 
+
+
+### 4.7 trimmed_sounds/
+
+This directory holds any sounds that have been modified in length. This allows the user to easily revert back to the original sound's duration, without having to modify the original sound whatsoever. This helps maintain data integrity.
+
 
 ---
 
+## 5. How to run the soundboard using the Command Line Interface (CLI)
 
+### 5.1 Initialisation/Requirements
+
+The following is a list of prerequisites before continuing:
+
+    - Git has been installed successfully on your machine
+
+    - There is a suitable version of Python that has been installed. For this application Python version 3.10+ is advised. 
+
+    - pip installer is present and usable on your machine. This can often be bundled together when using Python's install wizard
+
+    - When installing Python using the Wizard, make sure it is added to your PATH variable for the system.
+
+    - You are somewhat familiar with your machines terminal interface and commands. Extensive or expert knowledge is NOT required however.
+
+    - For editing any files, an appropriate IDE should be installed (this is entirely up to the developer of course, vim is applauded). Recommended choice is VS Code.
+
+Once the above has been confirmed/resolved, you may continue.
+
+Before running the application, it is strongly advised that a virtual environment (venv) is created before execution. 
+
+To do this depends on the environment that you are using. Likely, is that this is a wWindows machine, so the following will explain how to achieve this for Windows. For other operating systems, I recommend researching how to create a python virtual environment.
+
+
+### 5.2 Setup
+
+Steps:
+
+    1. Open your favourite terminal (I recommend the installing the [Windows terminal app](https://apps.microsoft.com/detail/9N0DX20HK701?hl=en-us&gl=GB&ocid=pdpshare) as this is a convenient way to manage different kinds of terminals in one place)
+
+    2. Navigate to the directory that you wish to download and work on the project in. Recommendation: Use something along the lines of `C:\Users\username\Documents\Projects...`
+
+    3. Then, clone the repository using git, e.g.
+
+        ```bash
+        > git clone https://github.com/BattmannWann/Soundboard-Using-PySide6.git
+    
+        ```
+
+    4. Then move into the cloned project directory 
+
+        ```bash
+        cd Soundboard-Using-PySide6
+        ```
+
+    5. Create the Python virtual environment in this directory:
+
+        ```bash
+        python -m venv venv
+
+        ```
+
+    6. On successful creation, you should then be able to execute the following to activate the environment:
+
+        ```bash
+        .\venv\Scripts\activate
+        ```
+
+    7. Next, navigate into the `Soundboard/` directory and install the project's requirements into the virtual environment using pip:
+
+        ```bash
+        cd Soundboard\
+        pip install -r .\requirements.txt
+        ```
+
+    8. Now, you should be able to run the application as follows:
+
+        ```bash
+        python .\tower_of_babel2.py
+        ```
+
+If there are any issues with these steps, then ensure to consult your terminal as it will instruct you what is wrong. If there are any ambiguities, Google and ChatBots can be very helpful in solving discrepancies. 
 
 
 
