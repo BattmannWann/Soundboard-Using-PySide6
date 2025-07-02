@@ -83,13 +83,12 @@ I will format this documentation such that you may use the links provided in the
     3.6 os
     3.7 json
     3.8 threading
-    3.9 pygame
-    3.10 sounddevice
-    3.11 soundfile
-    3.12 shutil
-    3.13 numpy
-    3.14 mutagen
-    3.15 getpass
+    3.9 sounddevice
+    3.10 soundfile
+    3.11 shutil
+    3.12 numpy
+    3.13 mutagen
+    3.14 getpass
 
 4. General Code
 
@@ -468,8 +467,99 @@ The addition here is that when the main window is closed, any sound that is curr
 
 ## 3. Imports and Libraries
 
-This section will go into detail on the libraries and imports that have been chosen. 
+This section will go into detail on the libraries and imports that have been chosen. It will not, however, teach how to use these  libraries, this section is for the sole intent of informing a developer which have been used such that they can become familiar with the system and research that of which they do not know. 
 
+To begin with, the most important library used in this application is PySide6. PySide6 is a modern Python GUI library that is build on the foundations of the C++ library Qt. 
+
+
+### 3.1 PySide6.QtCore
+This module provides core non-GUI functionality used by PySide6 applications, such as timers, signals and slots, file handling, and date/time utilities. It is used for handling lower-level tasks and application logic that doesn't involve direct user interface elements. 
+
+In this case, the application requires methods [QSize](https://doc.qt.io/qtforpython-6/PySide6/QtCore/QSize.html#more) and [Qt](https://doc.qt.io/qtforpython-6/PySide6/QtCore/Qt.html). 
+
+
+### 3.2 PySide6.QtGui
+This module contains classes for windowing system integration, 2D graphics, basic imaging, fonts, and input events. It's responsible for handling icons, key events, and rendering graphics within the app.
+
+The application imports [QAction](https://doc.qt.io/qtforpython-6/PySide6/QtGui/QAction.html), [QIcon](https://doc.qt.io/qtforpython-6/PySide6/QtGui/QIcon.html), [QPixmap](https://doc.qt.io/qtforpython-6/PySide6/QtGui/QPixmap.html), [QIntValidator](https://doc.qt.io/qtforpython-6/PySide6/QtGui/QIntValidator.html)
+
+
+### 3.3 PySide6.QtWidgets
+This is the main module used for building the graphical user interface. It contains the various UI components such as windows, buttons, labels, sliders, and layouts used to construct the application's interface.
+
+This is the largest and most foundational import. These will be listed but only the overall [Widgets](https://doc.qt.io/qtforpython-6/PySide6/QtWidgets/) link will be provided here.
+
+The imports are: 
+
+    - QApplication
+    - QCheckBox
+    - QLabel
+    - QMainWindow
+    - QStatusBar
+    - QToolBar
+    - QWidget
+    - QVBoxLayout
+    - QHBoxLayout
+    - QGridLayout
+    - QPushButton
+    - QFileDialog
+    - QMessageBox
+    - QComboBox
+    - QScrollArea 
+    - QSlider
+    - QLineEdit
+    - QFrame
+
+
+### 3.4 superqt
+This is an extended Qt widgets package that includes advanced and customizable components that go beyond the standard PySide6 offerings. For example, it includes the QRangeSlider, which allows users to select a range rather than a single value on a slider — a feature used in this application. 
+
+See the relevant documentation online [here](https://pypi.org/project/superqt/).
+
+
+### 3.5 sys
+The sys module is used to access system-specific parameters and functions. In this application, it may be used to handle command-line arguments or to exit the application safely.
+
+
+### 3.6 os
+The os module provides a portable way of interacting with the operating system. It is used for file and directory management, environment information, and checking system paths. It plays a key role in accessing, creating, and modifying files and folders.
+
+
+### 3.7 json
+The json module is used for parsing and writing JSON files. This is commonly used in the application to save and load settings such as volume or user-specific configurations.
+
+
+### 3.8 threading
+The threading module is used to run background tasks concurrently with the main application. This is important in GUI applications to ensure the interface remains responsive while long-running tasks (like sound playback or file operations) are being processed.
+
+
+### 3.9 sounddevice
+This module is used to play and record sound using NumPy arrays. It allows low-latency interaction with audio devices and is essential for real-time sound playback in the application.
+
+
+### 3.10 soundfile
+soundfile provides support for reading and writing sound files. It is used in conjunction with NumPy to load audio data into memory for processing or slicing.
+
+
+### 3.11 shutil
+This module offers high-level file operations such as copying and deleting files. It is used when the user moves, renames, or removes files within the soundboard directory.
+
+
+### 3.12 numpy
+NumPy is used for numerical operations, especially for manipulating audio data loaded from files. It enables slicing, analysing, and modifying sound waveforms in array format. 
+
+
+### 3.13 mutagen
+Mutagen is a Python module to handle audio metadata. It is used in this application to extract information such as sound duration, file tags, or encoding details for sound files like MP3 or WAV.
+
+As this is not a common import, see more details [here](https://mutagen.readthedocs.io/en/latest/user/gettingstarted.html).
+
+
+### 3.14 getpass
+The getpass module is used to securely retrieve the current user's login name. In this application, it is to simply retrieve the user's username. 
+
+
+---
 
 
 
