@@ -24,6 +24,8 @@ from PySide6.QtWidgets import (
     
 )
 
+from PySide6.QtGui import QFontDatabase
+
 from superqt import QDoubleRangeSlider
 
 import sys, os, json, threading, random
@@ -410,8 +412,76 @@ class EditFiles(QWidget):
     
     def edit_sound_length(self, name, duration):
         
+        QSS = """
+                QSlider {
+                    min-height: 20px;
+                }
+
+                QSlider::groove:horizontal {
+                    border: 0px;
+                    background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #888, stop:1 #ddd);
+                    height: 20px;
+                    border-radius: 10px;
+                }
+
+                QSlider::handle {
+                    background: qradialgradient(cx:0, cy:0, radius: 1.2, fx:0.35,
+                                                fy:0.3, stop:0 #eef, stop:1 #002);
+                    height: 20px;
+                    width: 20px;
+                    border-radius: 10px;
+                }
+
+                QSlider::sub-page:horizontal {
+                    background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #227, stop:1 #77a);
+                    border-top-left-radius: 10px;
+                    border-bottom-left-radius: 10px;
+                }
+
+                QDoubleRangeSlider {
+                    qproperty-barColor: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #227, stop:1 #77a);
+                    padding-left: 20px;
+                }
+                
+                
+                QPushButton {
+                font-family: 'Roboto';
+                background-color: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #227, stop:1 #77a);
+                color: white;
+                font-size: 14px;
+                padding: 8px 16px;
+                border-radius: 6px;
+                border: none;
+                font-weight: bold;
+            
+                }
+
+                QPushButton:hover {
+                    background-color: #357ABD;
+                    
+                }
+
+                QPushButton:pressed {
+                    background-color: #2C5F9E;
+                
+                }
+
+                QPushButton:disabled {
+                    background-color: #B0C4DE;
+                    color: #eee;
+                }
+                
+                QWidget {
+                    font-family: 'Roboto';
+
+                }
+
+            """
+        
         self.window = QWidget()
-        self.window.setFixedSize(600, 80)
+        self.window.setFixedSize(800,90)
+        self.window.setStyleSheet(QSS)
+            
         self.window.setWindowTitle(f"Editing Length of  sound '{name.text()}'")
         self.window.show()
         
@@ -422,11 +492,13 @@ class EditFiles(QWidget):
         self.previewed = False
         
         self.length = float(duration.text()[:len(duration.text())-1])
-        self.curr_len_label = QLabel(f"Length of {name.text()}: {duration.text()}")
+        self.curr_len_label = QLabel(f"Length of '{name.text()[:25]}': {duration.text()}")
         
         self.length_slider = QDoubleRangeSlider(Qt.Orientation.Horizontal)
-        self.length_slider.setFixedSize(60,20)
+        self.length_slider.setFixedSize(100,20)
         self.length_slider.valueChanged.connect(self.length_slider_val_changed)
+        
+        
         
         if self.length < 1:
             
@@ -443,8 +515,12 @@ class EditFiles(QWidget):
             self.length_slider.setRange(1.0, self.length)
             
         
-        self.preview_button = QPushButton("Preview Sound")
+        self.preview_button = QPushButton()
         self.preview_button.clicked.connect(lambda _, name = name.text(), slider = self.length_slider: self.preview_sound(name, slider))
+        
+        self.preview_button.setIcon(QIcon(f"{self.main_app.icons_path}/play_pause.png"))
+        self.preview_button.setIconSize(QSize(24, 24))
+        self.preview_button.setBaseSize(QSize(15, 10))
         
         self.save_length_button = QPushButton("Save")
         self.save_length_button.clicked.connect(lambda _, name = name.text(): self.save_length(name))
@@ -453,11 +529,11 @@ class EditFiles(QWidget):
         self.revert_sound_button.clicked.connect(lambda _, name = name.text(): self.revert_sound(name))
         
         self.grid.addWidget(self.preview_button, 0, 0, Qt.AlignmentFlag.AlignLeft)
-        self.grid.addWidget(self.curr_len_label, 0, 0, Qt.AlignmentFlag.AlignRight)
-        self.grid.addWidget(self.length_slider, 0, 1, Qt.AlignmentFlag.AlignLeft)
-        self.grid.addWidget(self.len_slider_label, 0, 1, Qt.AlignmentFlag.AlignCenter)
+        self.grid.addWidget(self.curr_len_label, 0, 0,Qt.AlignmentFlag.AlignHCenter)
+        self.grid.addWidget(self.length_slider, 0, 0, Qt.AlignmentFlag.AlignRight)
+        self.grid.addWidget(self.len_slider_label, 0, 1, Qt.AlignmentFlag.AlignLeft)
         self.grid.addWidget(self.save_length_button, 1, 1, Qt.AlignmentFlag.AlignRight)
-        self.grid.addWidget(self.revert_sound_button, 1, 0, Qt.AlignmentFlag.AlignRight)
+        self.grid.addWidget(self.revert_sound_button, 1, 0, Qt.AlignmentFlag.AlignCenter)
         
         
         
@@ -573,9 +649,6 @@ class EditFiles(QWidget):
             self.window.close()
             
             
-            
-            
-            
     def revert_sound(self, name):
         
         warning_msg = QMessageBox.question(self, "Confirm", 
@@ -621,6 +694,46 @@ class EditFiles(QWidget):
 class MainWindow(QMainWindow):
     
     def __init__(self):
+        
+        QSS = """
+        
+            QWidget {
+                font-family: 'Roboto';
+                
+            }
+            
+            
+            QSlider {
+                min-height: 20px;
+            }
+
+            QSlider::groove:horizontal {
+                border: 0px;
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #888, stop:1 #ddd);
+                height: 20px;
+                border-radius: 10px;
+            }
+
+            QSlider::handle {
+                background: qradialgradient(cx:0, cy:0, radius: 1.2, fx:0.35,
+                                            fy:0.3, stop:0 #eef, stop:1 #002);
+                height: 20px;
+                width: 20px;
+                border-radius: 10px;
+            }
+
+            QSlider::sub-page:horizontal {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #227, stop:1 #77a);
+                border-top-left-radius: 10px;
+                border-bottom-left-radius: 10px;
+            }
+
+            QSlider {
+                qproperty-barColor: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #227, stop:1 #77a);
+            }
+            
+        
+        """
         
         super().__init__()
         
@@ -669,6 +782,7 @@ class MainWindow(QMainWindow):
         self.setWindowIconText("Soundboard App")
         self.setWindowIcon(QIcon(f"{self.icons_path}/cassette.png"))
         self.setGeometry(100, 100, 800, 500)
+        self.setStyleSheet(QSS)
         
         self.layout = QVBoxLayout()
         
@@ -790,7 +904,6 @@ class MainWindow(QMainWindow):
         if not os.path.exists(self.unedited_sounds_path):
             
             os.makedirs(self.unedited_sounds_path)
-
    
 
         files = [f for f in os.listdir(self.sounds_path) if f.endswith(('.wav', '.mp3'))]
@@ -901,5 +1014,10 @@ class MainWindow(QMainWindow):
         
 app = QApplication([])
 window = MainWindow()
+
+roboto = QFontDatabase.addApplicationFont("fonts/Roboto/Roboto-Regular.ttf")
+roboto_medium = QFontDatabase.addApplicationFont("fonts/Roboto/Roboto-Medium.ttf")
+roboto_black = QFontDatabase.addApplicationFont("fonts/Roboto/Roboto-Black.ttf")
+
 window.show()
 app.exec()
