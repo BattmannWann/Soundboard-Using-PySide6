@@ -5,6 +5,5 @@ keyboard
 tkinterdnd2
 Pillow
 json5
-pygame
 PySide6
 superqt
