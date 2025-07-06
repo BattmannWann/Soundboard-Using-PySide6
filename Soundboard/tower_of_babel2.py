@@ -1,7 +1,7 @@
 #Imports -------------------------------------------------------------
 
 from PySide6.QtCore import QSize, Qt
-from PySide6.QtGui import QAction, QIcon, QKeySequence, QPixmap, QIntValidator
+from PySide6.QtGui import QAction, QIcon, QPixmap, QIntValidator
 from PySide6.QtWidgets import (
     QApplication,
     QCheckBox,
@@ -23,6 +23,8 @@ from PySide6.QtWidgets import (
     QFrame, 
     
 )
+
+from PySide6.QtGui import QFontDatabase
 
 from superqt import QDoubleRangeSlider
 
@@ -316,12 +318,12 @@ class EditFiles(QWidget):
     
     def delete_sound(self, name):
 
-        warning_msg = QMessageBox.question(self, "Confirm", f"Are you sure that you want to delete {name.text()}?", 
+        warning_msg = QMessageBox.question(self, "Confirm", f"Are you sure that you want to delete '{name.text()}'?", 
                                            QMessageBox.Cancel | QMessageBox.Yes)
         
         ok_box = QMessageBox(self)
         ok_box.setWindowTitle("Success!")
-        ok_box.setText(f"{name.text()} has been successfully deleted.")
+        ok_box.setText(f"'{name.text()}' has been successfully deleted.")
         ok_box.setStandardButtons(QMessageBox.Ok)
         
         try:
@@ -333,15 +335,16 @@ class EditFiles(QWidget):
                 self.main_app.sound_buttons.pop(name.text())
 
                 ok_box.exec()
+                self.close()
 
                 self.main_app.load_sounds()
-                self.load_sound_options()
+                self.main_app.edit_files()
         
         except Exception as e:
             
             not_ok_box = QMessageBox(self)
             not_ok_box.setWindowTitle("ERROR")
-            not_ok_box.setText(f"There has been an error deleting {name}, see: {e}")
+            not_ok_box.setText(f"There has been an error deleting '{name}', see: {e}")
             not_ok_box.setStandardButtons(QMessageBox.Ok)
             
             not_ok_box.exec()
@@ -351,7 +354,7 @@ class EditFiles(QWidget):
         
         self.window = QWidget()
         self.window.resize(900,100)
-        self.window.setWindowTitle(f"Renaming: {name.text()}")
+        self.window.setWindowTitle(f"Renaming: '{name.text()}'")
         self.window.show()
         
         self.grid = QGridLayout()
@@ -369,42 +372,116 @@ class EditFiles(QWidget):
         self.grid.addWidget(self.rename_box, 0, 1)
         self.grid.addWidget(self.save_button, 1, 1, alignment = Qt.AlignmentFlag.AlignCenter)
         
+        
     def save_rename(self, original):
             
         original_path = f"{self.main_app.sound_buttons[original.text()]["path"]}"
-        new_path = f"{self.main_app.sounds_path}/{self.rename_box.text()}.{original_path.split(".")[-1]}"
+        print(f"\n\n The path is {original_path}. The original is {original.text()} \n\n")
+        
+        file_type = self.main_app.sound_buttons[original.text()]["file_type"]
+        
+        new_path = f"{self.main_app.sounds_path}/{self.rename_box.text()}{file_type}"
         
         try:
             
-            if self.rename_box.text().strip() != '':
+            if f"{original.text()}{file_type}" in os.listdir(self.main_app.unedited_sounds_path):
                 
+                os.rename(f"{self.main_app.unedited_sounds_path}/{original.text()}{file_type}", f"{self.main_app.unedited_sounds_path}/{self.rename_box.text()}{file_type}")
+                
+            if self.rename_box.text().strip() != '':
+                    
                 os.rename(original_path, new_path)
                 self.main_app.sound_buttons[f"{self.rename_box.text()}"] = self.main_app.sound_buttons.pop(f"{original.text()}")
-            
+                
                 self.main_app.load_sounds()
-            
+                
                 QMessageBox.information(self, "Success!", f"Your sound '{original.text()}'  has been renamed to '{self.rename_box.text()}' ")
                 self.window.close()
+                self.close()
+                    
+                self.main_app.edit_files()
                 
-                self.load_sound_options()
-            
-                return self.load_sound_options()
-            
+                
             else:
                 QMessageBox.information(self, "Nothing Entered", "Nothing has been entered in the box. If this was a mistake, please try again.")
-            
+                
         except Exception as e:
             QMessageBox.warning(self, "Error", f"We were unable to rename your file, see: {e}")
             
             
-        finally:
-            self.load_sound_options()
-            
     
     def edit_sound_length(self, name, duration):
         
+        QSS = """
+                QSlider {
+                    min-height: 20px;
+                }
+
+                QSlider::groove:horizontal {
+                    border: 0px;
+                    background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #888, stop:1 #ddd);
+                    height: 20px;
+                    border-radius: 10px;
+                }
+
+                QSlider::handle {
+                    background: qradialgradient(cx:0, cy:0, radius: 1.2, fx:0.35,
+                                                fy:0.3, stop:0 #eef, stop:1 #002);
+                    height: 20px;
+                    width: 20px;
+                    border-radius: 10px;
+                }
+
+                QSlider::sub-page:horizontal {
+                    background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #227, stop:1 #77a);
+                    border-top-left-radius: 10px;
+                    border-bottom-left-radius: 10px;
+                }
+
+                QDoubleRangeSlider {
+                    qproperty-barColor: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #227, stop:1 #77a);
+                    padding-left: 20px;
+                }
+                
+                
+                QPushButton {
+                font-family: 'Roboto';
+                background-color: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #227, stop:1 #77a);
+                color: white;
+                font-size: 14px;
+                padding: 8px 16px;
+                border-radius: 6px;
+                border: none;
+                font-weight: bold;
+            
+                }
+
+                QPushButton:hover {
+                    background-color: #357ABD;
+                    
+                }
+
+                QPushButton:pressed {
+                    background-color: #2C5F9E;
+                
+                }
+
+                QPushButton:disabled {
+                    background-color: #B0C4DE;
+                    color: #eee;
+                }
+                
+                QWidget {
+                    font-family: 'Roboto';
+
+                }
+
+            """
+        
         self.window = QWidget()
-        self.window.setFixedSize(600, 80)
+        self.window.setFixedSize(800,90)
+        self.window.setStyleSheet(QSS)
+            
         self.window.setWindowTitle(f"Editing Length of  sound '{name.text()}'")
         self.window.show()
         
@@ -415,11 +492,13 @@ class EditFiles(QWidget):
         self.previewed = False
         
         self.length = float(duration.text()[:len(duration.text())-1])
-        self.curr_len_label = QLabel(f"Length of {name.text()}: {duration.text()}")
+        self.curr_len_label = QLabel(f"Length of '{name.text()[:25]}': {duration.text()}")
         
         self.length_slider = QDoubleRangeSlider(Qt.Orientation.Horizontal)
-        self.length_slider.setFixedSize(60,20)
+        self.length_slider.setFixedSize(100,20)
         self.length_slider.valueChanged.connect(self.length_slider_val_changed)
+        
+        
         
         if self.length < 1:
             
@@ -436,8 +515,12 @@ class EditFiles(QWidget):
             self.length_slider.setRange(1.0, self.length)
             
         
-        self.preview_button = QPushButton("Preview Sound")
+        self.preview_button = QPushButton()
         self.preview_button.clicked.connect(lambda _, name = name.text(), slider = self.length_slider: self.preview_sound(name, slider))
+        
+        self.preview_button.setIcon(QIcon(f"{self.main_app.icons_path}/play_pause.png"))
+        self.preview_button.setIconSize(QSize(24, 24))
+        self.preview_button.setBaseSize(QSize(15, 10))
         
         self.save_length_button = QPushButton("Save")
         self.save_length_button.clicked.connect(lambda _, name = name.text(): self.save_length(name))
@@ -446,11 +529,11 @@ class EditFiles(QWidget):
         self.revert_sound_button.clicked.connect(lambda _, name = name.text(): self.revert_sound(name))
         
         self.grid.addWidget(self.preview_button, 0, 0, Qt.AlignmentFlag.AlignLeft)
-        self.grid.addWidget(self.curr_len_label, 0, 0, Qt.AlignmentFlag.AlignRight)
-        self.grid.addWidget(self.length_slider, 0, 1, Qt.AlignmentFlag.AlignLeft)
-        self.grid.addWidget(self.len_slider_label, 0, 1, Qt.AlignmentFlag.AlignCenter)
+        self.grid.addWidget(self.curr_len_label, 0, 0,Qt.AlignmentFlag.AlignHCenter)
+        self.grid.addWidget(self.length_slider, 0, 0, Qt.AlignmentFlag.AlignRight)
+        self.grid.addWidget(self.len_slider_label, 0, 1, Qt.AlignmentFlag.AlignLeft)
         self.grid.addWidget(self.save_length_button, 1, 1, Qt.AlignmentFlag.AlignRight)
-        self.grid.addWidget(self.revert_sound_button, 1, 0, Qt.AlignmentFlag.AlignRight)
+        self.grid.addWidget(self.revert_sound_button, 1, 0, Qt.AlignmentFlag.AlignCenter)
         
         
         
@@ -540,26 +623,30 @@ class EditFiles(QWidget):
             if warning_msg == QMessageBox.Yes:
                 
                 print("Saving modified sound...")
-                sf.write(f"trimmed_sounds/{name}.mp3", self.trimmed_sounds[name]["trimmed_data"], self.trimmed_sounds[name]["samplerate"])
                 
-                self.main_app.sound_buttons[name]["path"] = f"trimmed_sounds/{name}.mp3"
+                file_type = self.main_app.sound_buttons[name]["file_type"]
+                shutil.move(f"{self.main_app.sound_buttons[name]["path"]}", f"{self.main_app.unedited_sounds_path}/")
+                
+                sf.write(f"{self.main_app.sounds_path}/{name}{file_type}", self.trimmed_sounds[name]["trimmed_data"], self.trimmed_sounds[name]["samplerate"])
                 ok_box.exec()
                 
                 self.close()
                 self.window.close()
                 
                 self.main_app.load_sounds()
-                self.load_sound_options()
+                self.main_app.edit_files()
                 
                 
         except Exception as e:
             
             not_ok_box = QMessageBox(self)
             not_ok_box.setWindowTitle("Error")
-            not_ok_box.setText(f"There has been an error updating {name}, see: {e}")
+            not_ok_box.setText(f"There has been an error updating '{name}', see: {e}")
             not_ok_box.setStandardButtons(QMessageBox.Ok)
             
             not_ok_box.exec()
+            
+            self.window.close()
             
             
     def revert_sound(self, name):
@@ -570,14 +657,18 @@ class EditFiles(QWidget):
         
         ok_box = QMessageBox(self)
         ok_box.setWindowTitle("Success!")
-        ok_box.setText(f"{name} has been successfully deleted.")
+        ok_box.setText(f"'{name}' has been successfully reverted back to the original file.")
         ok_box.setStandardButtons(QMessageBox.Ok)
         
         try:
             
             if warning_msg == QMessageBox.Yes:
                 
-                os.remove(f"{self.main_app.trimmed_sounds_path}/{name}.mp3")
+                file_type = self.main_app.sound_buttons[name]["file_type"]
+                
+                os.remove(f"{self.main_app.sounds_path}/{name}{file_type}")
+                shutil.move(f"{self.main_app.unedited_sounds_path}/{name}{file_type}", f"{self.main_app.sounds_path}/")
+                
                 ok_box.exec()
                 
                 self.main_app.load_sounds()
@@ -587,19 +678,62 @@ class EditFiles(QWidget):
             
             not_ok_box = QMessageBox(self)
             not_ok_box.setWindowTitle("ERROR")
-            not_ok_box.setText(f"There has been an error reverting {name}, this sound likely hasn't been modified yet. \n\nFor additional errors see: {e}")
+            not_ok_box.setText(f"There has been an error reverting '{name}', this sound likely hasn't been modified yet. \n\nFor additional errors see: {e}")
             not_ok_box.setStandardButtons(QMessageBox.Ok)
             
             not_ok_box.exec()  
 
         finally:
             self.window.close()
+            self.close()
+            
+            self.main_app.edit_files()
             
                
                   
 class MainWindow(QMainWindow):
     
     def __init__(self):
+        
+        QSS = """
+        
+            QWidget {
+                font-family: 'Roboto';
+                
+            }
+            
+            
+            QSlider {
+                min-height: 20px;
+            }
+
+            QSlider::groove:horizontal {
+                border: 0px;
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #888, stop:1 #ddd);
+                height: 20px;
+                border-radius: 10px;
+            }
+
+            QSlider::handle {
+                background: qradialgradient(cx:0, cy:0, radius: 1.2, fx:0.35,
+                                            fy:0.3, stop:0 #eef, stop:1 #002);
+                height: 20px;
+                width: 20px;
+                border-radius: 10px;
+            }
+
+            QSlider::sub-page:horizontal {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #227, stop:1 #77a);
+                border-top-left-radius: 10px;
+                border-bottom-left-radius: 10px;
+            }
+
+            QSlider {
+                qproperty-barColor: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #227, stop:1 #77a);
+            }
+            
+        
+        """
         
         super().__init__()
         
@@ -639,6 +773,7 @@ class MainWindow(QMainWindow):
         self.icons_path = "media/images"
         self.sounds_path = "sounds"
         self.trimmed_sounds_path = "trimmed_sounds"
+        self.unedited_sounds_path = "unedited_sounds"
         self.sound_buttons = {}
         self.settings = settings
         self.save_settings()
@@ -647,6 +782,7 @@ class MainWindow(QMainWindow):
         self.setWindowIconText("Soundboard App")
         self.setWindowIcon(QIcon(f"{self.icons_path}/cassette.png"))
         self.setGeometry(100, 100, 800, 500)
+        self.setStyleSheet(QSS)
         
         self.layout = QVBoxLayout()
         
@@ -764,21 +900,18 @@ class MainWindow(QMainWindow):
             
 
             return
-
+        
+        if not os.path.exists(self.unedited_sounds_path):
+            
+            os.makedirs(self.unedited_sounds_path)
    
 
         files = [f for f in os.listdir(self.sounds_path) if f.endswith(('.wav', '.mp3'))]
-        trimmed_file_options = [f for f in os.listdir(self.trimmed_sounds_path) if f.endswith((".wav", ".mp3"))]
 
         for idx, file in enumerate(files):
             
             name = os.path.splitext(file)[0]
-            
-            if file in trimmed_file_options:
-                path = os.path.join(self.trimmed_sounds_path, file)
-            
-            else:
-                path = os.path.join(self.sounds_path, file)
+            path = os.path.join(self.sounds_path, file)
             
             try:
                 audio = MutagenFile(path)
@@ -800,7 +933,7 @@ class MainWindow(QMainWindow):
 
             row, col = divmod(idx, 2)
             self.grid.addWidget(btn, row, col)
-            self.sound_buttons[name] = {"path": path, "emoji_path": icon_path, "duration": duration}
+            self.sound_buttons[name] = {"path": path, "emoji_path": icon_path, "duration": duration, "file_type": f".{path.split(".")[-1]}"}
             
     
         
@@ -881,5 +1014,10 @@ class MainWindow(QMainWindow):
         
 app = QApplication([])
 window = MainWindow()
+
+roboto = QFontDatabase.addApplicationFont("fonts/Roboto/Roboto-Regular.ttf")
+roboto_medium = QFontDatabase.addApplicationFont("fonts/Roboto/Roboto-Medium.ttf")
+roboto_black = QFontDatabase.addApplicationFont("fonts/Roboto/Roboto-Black.ttf")
+
 window.show()
 app.exec()

@@ -15,7 +15,7 @@ __pycache__/
 .DS_Store
 Thumbs.db
 
-# Soundboard Python files (if you want to ignore them)
+# Soundboard Python files 
 pyside_soundboard.py
 python_testing.py
 soundboard.py
