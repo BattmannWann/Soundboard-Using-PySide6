@@ -782,8 +782,8 @@ class MainWindow(QMainWindow):
         self.setWindowIconText("Soundboard App")
         self.setWindowIcon(QIcon(f"{self.icons_path}/cassette.png"))
         self.setGeometry(100, 100, 800, 500)
-        self.setStyleSheet(QSS)
-        
+        #self.setStyleSheet(QSS)
+
         self.layout = QVBoxLayout()
         
         self.content_widget = QWidget()
@@ -792,11 +792,13 @@ class MainWindow(QMainWindow):
         self.grid.setVerticalSpacing(20)
         
         self.scroll_area = QScrollArea()
+        self.scroll_area.setObjectName("ScrollArea")
         self.scroll_area.setWidgetResizable(True)
         self.scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
 
         self.welcome_label = QLabel(f"Welcome {self.settings["username"]}!")
+        self.welcome_label.setObjectName("MainTitle")
         welcome_font = self.welcome_label.font()
         welcome_font.setPointSize(30)
         self.welcome_label.setFont(welcome_font)
@@ -808,13 +810,15 @@ class MainWindow(QMainWindow):
         self.layout.addWidget(self.scroll_area)
         
         self.layout_widget = QWidget()
+        self.layout_widget.setObjectName("MainLayoutContainer")
         self.layout_widget.setLayout(self.layout)
         self.setCentralWidget(self.layout_widget)
 
-        self.setMinimumSize((QSize(1100, 450)))
+        self.setMinimumSize((QSize(1200, 450)))
         self.setMaximumSize(QSize(1200, 1000))
         
         toolbar = QToolBar("Soundboard Toolbar")
+        toolbar.setObjectName("MainToolbar")
         toolbar.setIconSize(QSize(16,16))
         self.addToolBar(toolbar)
         
@@ -853,6 +857,7 @@ class MainWindow(QMainWindow):
         toolbar.addWidget(volume_label)
         
         self.volume_slider = QSlider(Qt.Orientation.Horizontal)
+        self.volume_slider.setProperty("class", "VolumeSlider")
         self.volume_slider.setRange(1, 100)
         self.volume_slider.setSingleStep(1)
         self.volume_slider.setValue(self.settings["volume"]*100)
@@ -860,6 +865,9 @@ class MainWindow(QMainWindow):
         self.volume_slider.valueChanged.connect(self.set_volume)
         
         toolbar.addWidget(self.volume_slider)
+
+        with open("style_sheet.qss", "r") as f:
+            self.setStyleSheet(f.read())
         
         
     def set_volume(self, value):
@@ -925,6 +933,8 @@ class MainWindow(QMainWindow):
 
             icon_path = os.path.join(self.icons_path, name + ".png")
             btn = QPushButton(name[:40])
+
+            btn.setProperty("class", "SoundButton")
             
             if os.path.exists(icon_path):
                 btn.setIcon(QIcon(icon_path))
@@ -1018,6 +1028,7 @@ window = MainWindow()
 roboto = QFontDatabase.addApplicationFont("fonts/Roboto/Roboto-Regular.ttf")
 roboto_medium = QFontDatabase.addApplicationFont("fonts/Roboto/Roboto-Medium.ttf")
 roboto_black = QFontDatabase.addApplicationFont("fonts/Roboto/Roboto-Black.ttf")
+
 
 window.show()
 app.exec()
