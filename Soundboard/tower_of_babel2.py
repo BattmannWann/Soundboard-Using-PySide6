@@ -788,10 +788,12 @@ class MainWindow(QMainWindow):
         
         self.content_widget = QWidget()
         self.grid = QGridLayout(self.content_widget)
+        self.grid.setObjectName("SoundboardCard")
         self.grid.setHorizontalSpacing(50)
         self.grid.setVerticalSpacing(20)
         
         self.scroll_area = QScrollArea()
+        self.setProperty("class", "SoundboardCard")
         self.scroll_area.setObjectName("ScrollArea")
         self.scroll_area.setWidgetResizable(True)
         self.scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
@@ -810,7 +812,6 @@ class MainWindow(QMainWindow):
         self.layout.addWidget(self.scroll_area)
         
         self.layout_widget = QWidget()
-        self.layout_widget.setObjectName("MainLayoutContainer")
         self.layout_widget.setLayout(self.layout)
         self.setCentralWidget(self.layout_widget)
 
