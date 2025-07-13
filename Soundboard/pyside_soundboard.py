@@ -1,45 +1,62 @@
-from PySide6.QtWidgets import (
-    QApplication, QLabel, QPushButton, QVBoxLayout, QHBoxLayout, QWidget, QFrame
-)
+import sys
+from PySide6.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton, QStyle
+from PySide6.QtGui import QIcon, QPixmap, QPainter
+from PySide6.QtCore import QSize, Qt
 
-app = QApplication([])
+class ButtonIconDemo(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("QPushButton Icon Left Align Demo")
+        self.setGeometry(100, 100, 300, 200)
 
-# Main window
-window = QWidget()
-layout = QVBoxLayout(window)
+        layout = QVBoxLayout()
+        self.setLayout(layout)
 
-# Title
-title_label = QLabel("SoundBoard")
-title_label.setObjectName("MainTitle")
-layout.addWidget(title_label)
+        button = QPushButton("Play Sound")
+        button.setObjectName("SoundButton")
 
-# Subtitle
-subtitle_label = QLabel("Click the buttons to play sounds")
-subtitle_label.setObjectName("MainSubtitle")
-layout.addWidget(subtitle_label)
+        # Set an icon directly on the button
+        try:
+            icon = self.style().standardIcon(QStyle.SP_MediaPlay)
+        except AttributeError:
+            from PySide6.QtGui import QPixmap, QPainter
+            pixmap = QPixmap(32, 32)
+            pixmap.fill(Qt.transparent)
+            painter = QPainter(pixmap)
+            painter.setBrush(Qt.blue)
+            painter.drawEllipse(0, 0, 32, 32)
+            painter.end()
+            icon = QIcon(pixmap)
 
-# Soundboard frame
-soundboard_frame = QFrame()
-soundboard_frame.setObjectName("SoundboardCard")
-soundboard_layout = QHBoxLayout(soundboard_frame)
+        button.setIcon(icon)
+        button.setIconSize(QSize(20, 20))
 
-# Sound buttons
-for label in ["Drum", "Bell", "Click", "Success"]:
-    btn = QPushButton(label)
-    btn.setProperty("class", "SoundButton")
-    soundboard_layout.addWidget(btn)
+        layout.addWidget(button)
 
-layout.addWidget(soundboard_frame)
+        # Apply your QSS with text-align: left
+        self.setStyleSheet("""
+            QPushButton#SoundButton {
+                background-color: #f9fafb;
+                border: 1px solid #e5e7eb;
+                border-radius: 8px;
+                padding: 16px;
+                color: #374151;
+                font-weight: 500;
+                /* Crucial for left alignment of icon and text */
+                text-align: center;
+            }
 
-# Footer
-footer = QLabel("Created with PySide6")
-footer.setObjectName("Footer")
-layout.addWidget(footer)
+            QPushButton#SoundButton:hover {
+                background-color: #f3f4f6;
+            }
 
-# Apply stylesheet (after setting all object names / classes)
-with open("style_sheet.qss", "r") as f:
-    app.setStyleSheet(f.read())
+            QPushButton#SoundButton:pressed {
+                background-color: #e5e7eb;
+            }
+        """)
 
-# Show window
-window.show()
-app.exec()
+if __name__ == "__main__":
+    app = QApplication(sys.argv)
+    demo = ButtonIconDemo()
+    demo.show()
+    sys.exit(app.exec())

@@ -48,6 +48,7 @@ class Settings(QWidget):
         self.main_app.hide()
         
         self.setWindowTitle("Settings")
+        self.setWindowIcon(QIcon(f"{self.main_app.icons_path}/cassette.png"))
         self.resize(QSize(400, 200))
         self.setMaximumSize(400, 200)
         
@@ -144,6 +145,7 @@ class EditFiles(QWidget):
         self.main_app = main_app
         self.main_app.hide()
         self.setWindowTitle("Edit File(s)")
+        self.setWindowIcon(QIcon(f"{self.main_app.icons_path}/cassette.png"))
         self.resize(1300, 800)
         self.setMinimumSize(1300, 800)
 
@@ -156,6 +158,9 @@ class EditFiles(QWidget):
             
         self.content_widget = QWidget()
         self.grid = QGridLayout(self.content_widget)
+        
+        with open("themes/style_sheet_edit_files.qss", "r") as f:
+            self.setStyleSheet(f.read())
         
         self.load_sound_options()
 
@@ -695,46 +700,6 @@ class MainWindow(QMainWindow):
     
     def __init__(self):
         
-        QSS = """
-        
-            QWidget {
-                font-family: 'Roboto';
-                
-            }
-            
-            
-            QSlider {
-                min-height: 20px;
-            }
-
-            QSlider::groove:horizontal {
-                border: 0px;
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #888, stop:1 #ddd);
-                height: 20px;
-                border-radius: 10px;
-            }
-
-            QSlider::handle {
-                background: qradialgradient(cx:0, cy:0, radius: 1.2, fx:0.35,
-                                            fy:0.3, stop:0 #eef, stop:1 #002);
-                height: 20px;
-                width: 20px;
-                border-radius: 10px;
-            }
-
-            QSlider::sub-page:horizontal {
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #227, stop:1 #77a);
-                border-top-left-radius: 10px;
-                border-bottom-left-radius: 10px;
-            }
-
-            QSlider {
-                qproperty-barColor: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #227, stop:1 #77a);
-            }
-            
-        
-        """
-        
         super().__init__()
         
         self.SETTINGS_FILE = "settings.json"
@@ -782,13 +747,13 @@ class MainWindow(QMainWindow):
         self.setWindowIconText("Soundboard App")
         self.setWindowIcon(QIcon(f"{self.icons_path}/cassette.png"))
         self.setGeometry(100, 100, 800, 500)
-        #self.setStyleSheet(QSS)
 
         self.layout = QVBoxLayout()
         
         self.content_widget = QWidget()
+        self.content_widget.setObjectName("SoundboardCard")
         self.grid = QGridLayout(self.content_widget)
-        self.grid.setObjectName("SoundboardCard")
+        #self.grid.setObjectName("SoundboardCard")
         self.grid.setHorizontalSpacing(50)
         self.grid.setVerticalSpacing(20)
         
@@ -798,6 +763,7 @@ class MainWindow(QMainWindow):
         self.scroll_area.setWidgetResizable(True)
         self.scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        
 
         self.welcome_label = QLabel(f"Welcome {self.settings["username"]}!")
         self.welcome_label.setObjectName("MainTitle")
@@ -815,12 +781,13 @@ class MainWindow(QMainWindow):
         self.layout_widget.setLayout(self.layout)
         self.setCentralWidget(self.layout_widget)
 
-        self.setMinimumSize((QSize(1200, 450)))
-        self.setMaximumSize(QSize(1200, 1000))
+        self.setMinimumSize((QSize(1300, 450)))
+        self.setMaximumSize(QSize(1300, 1000))
         
         toolbar = QToolBar("Soundboard Toolbar")
-        toolbar.setObjectName("MainToolbar")
         toolbar.setIconSize(QSize(16,16))
+        toolbar.setContextMenuPolicy(Qt.PreventContextMenu)
+        
         self.addToolBar(toolbar)
         
         settings_button = QAction("Settings", self)
@@ -851,7 +818,7 @@ class MainWindow(QMainWindow):
         toolbar.addSeparator()
         
         spacer = QWidget()
-        spacer.setFixedSize(450, 0)
+        spacer.setFixedSize(600, 0)
         toolbar.addWidget(spacer)
         
         volume_label = QLabel("Volume    ")
@@ -867,7 +834,7 @@ class MainWindow(QMainWindow):
         
         toolbar.addWidget(self.volume_slider)
 
-        with open("style_sheet.qss", "r") as f:
+        with open("themes/style_sheet_main_app.qss", "r") as f:
             self.setStyleSheet(f.read())
         
         
@@ -933,16 +900,17 @@ class MainWindow(QMainWindow):
                 duration = None
 
             icon_path = os.path.join(self.icons_path, name + ".png")
-            btn = QPushButton(name[:40])
+            btn = QPushButton(f" {name[:40]}")
 
             btn.setProperty("class", "SoundButton")
             
             if os.path.exists(icon_path):
                 btn.setIcon(QIcon(icon_path))
+                btn.setIconSize(QSize(300, 35))
                 
             btn.clicked.connect(lambda _, p=path, v = self.settings["volume"]: self.play_sound(p, v))
 
-            row, col = divmod(idx, 2)
+            row, col = divmod(idx, 3)
             self.grid.addWidget(btn, row, col)
             self.sound_buttons[name] = {"path": path, "emoji_path": icon_path, "duration": duration, "file_type": f".{path.split(".")[-1]}"}
             
