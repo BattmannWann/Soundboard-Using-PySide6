@@ -1,0 +1,44 @@
+/* === Style Sheet for the Settings Page */
+
+QWidget {
+
+    background-color: #f9fafb;
+    color: #374151;
+}
+
+QComboBox {
+
+    background-color: #d9d9da;
+}
+
+QLineEdit {
+
+    background-color: #d9d9da;
+}
+
+
+
+QPushButton {
+
+    background-color: #f9fafb; 
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 4px;
+    color: #374151;
+    font-weight: 500;
+
+}
+
+QPushButton:hover {
+    background-color: #f3f4f6; 
+}
+
+QPushButton:pressed {
+    background-color: #e5e7eb;
+    
+}
+
+
+QPushButton QLabel {
+    qproperty-alignment: AlignCenter;
+}

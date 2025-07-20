@@ -96,6 +96,9 @@ class Settings(QWidget):
         self.grid.addWidget(self.username, 3, 1)
         
         layout.addWidget(save_button, Qt.AlignmentFlag.AlignCenter)
+
+        with open("themes/style_sheet_settings.qss", "r") as f:
+            self.setStyleSheet(f.read())
         
     def index_changed(self, index):
         print(index)
@@ -157,12 +160,17 @@ class EditFiles(QWidget):
         self.layout = QVBoxLayout(self)
             
         self.content_widget = QWidget()
+        self.content_widget.setObjectName("ContentWidget")
         self.grid = QGridLayout(self.content_widget)
         
+        self.load_sound_options()
+
         with open("themes/style_sheet_edit_files.qss", "r") as f:
             self.setStyleSheet(f.read())
+
         
-        self.load_sound_options()
+
+        
 
             
     def closeEvent(self, event):
@@ -299,6 +307,9 @@ class EditFiles(QWidget):
             curr_grid += 1
 
         self.grid.addWidget(self.bottom_line, curr_grid, 0, 1, -1)
+
+        with open("themes/style_sheet_edit_files.qss", "r") as f:
+            self.setStyleSheet(f.read())
 
     
     def create_vertical_separator(self):

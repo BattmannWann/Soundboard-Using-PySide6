@@ -41,7 +41,7 @@ QScrollArea {
     
 }
 
-/* Vertical ScrollBar */
+
 QScrollBar:vertical {
 
     border: none;

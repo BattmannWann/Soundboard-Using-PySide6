@@ -1,26 +1,31 @@
-QWidget {
-    
-    font-family: Roboto'
+/* === Style Sheet for the Edit Files Window, ENTIRE DOCUMENT === */
+
+QWidget#ContentWidget {
+    background-color: #f3f4f6; 
+    font-family: 'Segoe UI', 'Roboto', sans-serif;
     font-size: 14px;
     color: #374151; /* Tailwind's gray-700 */
 }
 
-/* === Sound Button === */
-QPushButton {
-    background-color: #f9fafb; /* Tailwind's gray-50 */
-    border: 1px solid #e5e7eb;
-    border-radius: 8px;
-    padding: 16px;
-    padding-left: -10px;
+QWidget{
+
     color: #374151;
-    font-weight: 500;
-    text-align: center;
-    
 }
 
 
+QPushButton {
+
+    background-color: #f9fafb; 
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 8px;
+    color: #374151;
+    font-weight: 500;
+
+}
+
 QPushButton:hover {
-    background-color: #f3f4f6; /* Tailwind's gray-100 */
+    background-color: #f3f4f6; 
 }
 
 QPushButton:pressed {
@@ -31,4 +36,41 @@ QPushButton:pressed {
 
 QPushButton QLabel {
     qproperty-alignment: AlignCenter;
+}
+
+QScrollBar:vertical {
+
+    border: none;
+    background: #f1f1f1;
+    width: 12px;
+    margin: 0px 0px 0px 0px;
+    border-radius: 4px;
+    
+}
+
+QScrollBar::handle:vertical {
+
+    background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #227, stop:1 #77a);
+    min-height: 8px;
+    max-height: 10px;
+    border-radius:4px;
+    
+}
+
+
+QScrollBar::handle:vertical:hover {
+    background: #7575a9;
+}
+
+/* Removes up/down buttons */
+QScrollBar::add-line:vertical,
+QScrollBar::sub-line:vertical {
+    
+    background: none;
+    border: none;
+}
+
+QScrollBar::add-page:vertical,
+QScrollBar::sub-page:vertical {
+    background: none;
 }
