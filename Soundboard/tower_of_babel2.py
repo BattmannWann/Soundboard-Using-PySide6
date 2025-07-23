@@ -21,6 +21,7 @@ from PySide6.QtWidgets import (
     QSlider,
     QLineEdit,
     QFrame, 
+    QStackedLayout
     
 )
 
@@ -45,12 +46,11 @@ class Settings(QWidget):
         
         super().__init__()
         self.main_app = main_app
-        self.main_app.hide()
+
+        self.main_app.resize(QSize(500, 400))
         
         self.setWindowTitle("Settings")
         self.setWindowIcon(QIcon(f"{self.main_app.icons_path}/cassette.png"))
-        self.resize(QSize(400, 200))
-        self.setMaximumSize(400, 200)
         
         layout = QVBoxLayout(self)
         self.grid = QGridLayout()
@@ -68,7 +68,6 @@ class Settings(QWidget):
         
         self.output_audio_option = QComboBox()
         self.output_audio_option.addItems(devices)
-        self.output_audio_option.currentIndexChanged.connect(self.index_changed)
         self.output_audio_option.setCurrentIndex(main_app.settings["default_output_info"]["index"])
         
         save_button = QPushButton("Save")
@@ -77,34 +76,29 @@ class Settings(QWidget):
         
         self.default_volume_label = QLabel("Default Volume Setting: ")
         self.default_volume = QLineEdit()
-        self.default_volume.setMaxLength(10)
+        self.default_volume.setFixedSize(QSize(400, 20))
         self.default_volume.setPlaceholderText("Enter the volume here, E.g. 100")
         self.default_volume.setValidator(QIntValidator(1, 100, self))
         
 
         self.username_label = QLabel("Username: ")
         self.username = QLineEdit()
+        self.username.setFixedSize(QSize(400, 20))
         self.username.setPlaceholderText(f"{self.main_app.settings["username"]}")
         
-        self.grid.addWidget(input_audio_label, 0, 0)
-        self.grid.addWidget(self.input_audio_option, 0, 1)
-        self.grid.addWidget(output_audio_label, 1, 0)
-        self.grid.addWidget(self.output_audio_option, 1, 1)
-        self.grid.addWidget(self.default_volume_label, 2, 0)
-        self.grid.addWidget(self.default_volume, 2, 1)
-        self.grid.addWidget(self.username_label, 3, 0)
-        self.grid.addWidget(self.username, 3, 1)
+        self.grid.addWidget(input_audio_label, 0, 0, Qt.AlignmentFlag.AlignCenter)
+        self.grid.addWidget(self.input_audio_option, 0, 1, Qt.AlignmentFlag.AlignCenter)
+        self.grid.addWidget(output_audio_label, 1, 0, Qt.AlignmentFlag.AlignCenter)
+        self.grid.addWidget(self.output_audio_option, 1, 1, Qt.AlignmentFlag.AlignCenter)
+        self.grid.addWidget(self.default_volume_label, 2, 0, Qt.AlignmentFlag.AlignCenter)
+        self.grid.addWidget(self.default_volume, 2, 1, Qt.AlignmentFlag.AlignCenter)
+        self.grid.addWidget(self.username_label, 3, 0, Qt.AlignmentFlag.AlignCenter)
+        self.grid.addWidget(self.username, 3, 1, Qt.AlignmentFlag.AlignCenter)
         
         layout.addWidget(save_button, Qt.AlignmentFlag.AlignCenter)
 
         with open("themes/style_sheet_settings.qss", "r") as f:
             self.setStyleSheet(f.read())
-        
-    def index_changed(self, index):
-        print(index)
-        
-    def text_changed(self, text):
-        print(text)
         
         
     def save(self):
@@ -128,15 +122,11 @@ class Settings(QWidget):
             self.main_app.save_settings()
 
             QMessageBox.information(self, "Success!", "Your settings have been saved successfully.")
-            self.close()
+            
 
         except Exception as e:
             QMessageBox.warning(self, "Error", f"Unable to save settings, see: {e}")
 
-        
-    def closeEvent(self, event):
-        self.main_app.show()
-        return super().closeEvent(event)
         
         
 class EditFiles(QWidget):
@@ -146,7 +136,6 @@ class EditFiles(QWidget):
         super().__init__()
         
         self.main_app = main_app
-        self.main_app.hide()
         self.setWindowTitle("Edit File(s)")
         self.setWindowIcon(QIcon(f"{self.main_app.icons_path}/cassette.png"))
         self.resize(1300, 800)
@@ -167,15 +156,6 @@ class EditFiles(QWidget):
 
         with open("themes/style_sheet_edit_files.qss", "r") as f:
             self.setStyleSheet(f.read())
-
-        
-
-        
-
-            
-    def closeEvent(self, event):
-        self.main_app.show()
-        return super().closeEvent(event)
     
     
     def load_sound_options(self):
@@ -351,7 +331,6 @@ class EditFiles(QWidget):
                 self.main_app.sound_buttons.pop(name.text())
 
                 ok_box.exec()
-                self.close()
 
                 self.main_app.load_sounds()
                 self.main_app.edit_files()
@@ -413,7 +392,6 @@ class EditFiles(QWidget):
                 
                 QMessageBox.information(self, "Success!", f"Your sound '{original.text()}'  has been renamed to '{self.rename_box.text()}' ")
                 self.window.close()
-                self.close()
                     
                 self.main_app.edit_files()
                 
@@ -646,7 +624,6 @@ class EditFiles(QWidget):
                 sf.write(f"{self.main_app.sounds_path}/{name}{file_type}", self.trimmed_sounds[name]["trimmed_data"], self.trimmed_sounds[name]["samplerate"])
                 ok_box.exec()
                 
-                self.close()
                 self.window.close()
                 
                 self.main_app.load_sounds()
@@ -701,7 +678,6 @@ class EditFiles(QWidget):
 
         finally:
             self.window.close()
-            self.close()
             
             self.main_app.edit_files()
             
@@ -757,49 +733,25 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("Tower of Babel 2")
         self.setWindowIconText("Soundboard App")
         self.setWindowIcon(QIcon(f"{self.icons_path}/cassette.png"))
+
         self.setGeometry(100, 100, 800, 500)
+        self.resize(QSize(1400, 450))
+        #self.setMinimumSize((QSize(1400, 450)))
+        self.setMaximumSize(QSize(1400, 1000))
 
-        self.layout = QVBoxLayout()
-        
-        self.content_widget = QWidget()
-        self.content_widget.setObjectName("SoundboardCard")
-        self.grid = QGridLayout(self.content_widget)
-        #self.grid.setObjectName("SoundboardCard")
-        self.grid.setHorizontalSpacing(50)
-        self.grid.setVerticalSpacing(20)
-        
-        self.scroll_area = QScrollArea()
-        self.setProperty("class", "SoundboardCard")
-        self.scroll_area.setObjectName("ScrollArea")
-        self.scroll_area.setWidgetResizable(True)
-        self.scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self.scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
-        
-
-        self.welcome_label = QLabel(f"Welcome {self.settings["username"]}!")
-        self.welcome_label.setObjectName("MainTitle")
-        welcome_font = self.welcome_label.font()
-        welcome_font.setPointSize(30)
-        self.welcome_label.setFont(welcome_font)
-
-        self.layout.addWidget(self.welcome_label)
-
-        self.load_sounds()
-        self.scroll_area.setWidget(self.content_widget)
-        self.layout.addWidget(self.scroll_area)
-        
-        self.layout_widget = QWidget()
-        self.layout_widget.setLayout(self.layout)
-        self.setCentralWidget(self.layout_widget)
-
-        self.setMinimumSize((QSize(1300, 450)))
-        self.setMaximumSize(QSize(1300, 1000))
+        self.build_home_view()
         
         toolbar = QToolBar("Soundboard Toolbar")
-        toolbar.setIconSize(QSize(16,16))
+        toolbar.setIconSize(QSize(32,32))
         toolbar.setContextMenuPolicy(Qt.PreventContextMenu)
         
         self.addToolBar(toolbar)
+
+        home_button = QAction(QIcon("media/images/home_icon.png"), "", self)
+        home_button.triggered.connect(self.build_home_view)
+
+        toolbar.addAction(home_button)
+        toolbar.addSeparator()
         
         settings_button = QAction("Settings", self)
         settings_button.triggered.connect(self.settings_config)
@@ -844,6 +796,7 @@ class MainWindow(QMainWindow):
         self.volume_slider.valueChanged.connect(self.set_volume)
         
         toolbar.addWidget(self.volume_slider)
+
 
         with open("themes/style_sheet_main_app.qss", "r") as f:
             self.setStyleSheet(f.read())
@@ -926,6 +879,40 @@ class MainWindow(QMainWindow):
             self.sound_buttons[name] = {"path": path, "emoji_path": icon_path, "duration": duration, "file_type": f".{path.split(".")[-1]}"}
             
     
+
+    def build_home_view(self):
+        self.layout = QVBoxLayout()
+
+        self.content_widget = QWidget()
+        self.grid = QGridLayout(self.content_widget)
+        self.grid.setHorizontalSpacing(50)
+        self.grid.setVerticalSpacing(20)
+
+        self.scroll_area = QScrollArea()
+        self.scroll_area.setWidgetResizable(True)
+        self.scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+
+        self.welcome_label = QLabel(f"Welcome {self.settings['username']}!")
+        welcome_font = self.welcome_label.font()
+        welcome_font.setPointSize(30)
+        self.welcome_label.setFont(welcome_font)
+        self.welcome_label.setObjectName("MainTitle")
+
+        self.layout.addWidget(self.welcome_label)
+
+        self.load_sounds()
+        self.scroll_area.setWidget(self.content_widget)
+        self.layout.addWidget(self.scroll_area)
+
+        layout_widget = QWidget()
+        layout_widget.setLayout(self.layout)
+        self.setCentralWidget(layout_widget)
+
+        with open("themes/style_sheet_main_app.qss", "r") as f:
+            self.setStyleSheet(f.read())
+
+
         
     def add_files(self):
         
@@ -948,14 +935,24 @@ class MainWindow(QMainWindow):
         
     def edit_files(self):
         
-        self.external_window = EditFiles(self)
-        self.external_window.show()
+        # self.external_window = EditFiles(self)
+        # self.external_window.show()
+
+        with open("themes/style_sheet_edit_files.qss", "r") as f:
+            self.setStyleSheet(f.read())
+
+        self.setCentralWidget(EditFiles(self))
+        
         
         
     def settings_config(self):
         
-        self.external_window = Settings(self)
-        self.external_window.show()
+        # self.external_window = Settings(self)
+        # self.external_window.show()
+        with open("themes/style_sheet_settings.qss", "r") as f:
+            self.setStyleSheet(f.read())
+
+        self.setCentralWidget(Settings(self))
 
     def stop_sounds(self):
         print("Stopping sound(s)")

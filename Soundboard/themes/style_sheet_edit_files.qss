@@ -7,9 +7,11 @@ QWidget#ContentWidget {
     color: #374151; /* Tailwind's gray-700 */
 }
 
-QWidget{
-
-    color: #374151;
+QWidget {
+    background-color: #f3f4f6; /* Tailwind's gray-100 */
+    font-family: 'Segoe UI', 'Roboto', sans-serif;
+    font-size: 14px;
+    color: #374151; /* Tailwind's gray-700 */
 }
 
 
@@ -73,4 +75,40 @@ QScrollBar::sub-line:vertical {
 QScrollBar::add-page:vertical,
 QScrollBar::sub-page:vertical {
     background: none;
+}
+
+
+/* === Volume Slider === */
+QSlider[class="VolumeSlider"] {
+    min-height: 20px;
+}
+
+
+QSlider[class="VolumeSlider"]::groove:horizontal {
+    border: 0px;
+    background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #888, stop:1 #ddd);
+    height: 20px;
+    border-radius: 10px;
+}
+
+
+QSlider[class="VolumeSlider"]::handle {
+    background: qradialgradient(cx:0, cy:0, radius: 1.2, fx:0.35,
+                                            fy:0.3, stop:0 #eef, stop:1 #002);
+    height: 20px;
+    width: 20px;
+    border-radius: 10px;
+}
+
+
+QSlider[class="VolumeSlider"]::sub-page:horizontal {
+    background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #227, stop:1 #77a);
+    border-top-left-radius: 10px;
+    border-bottom-left-radius: 10px;
+}
+
+
+QToolBar {
+
+    font-family: 'Roboto'
 }
