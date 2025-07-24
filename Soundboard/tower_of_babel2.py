@@ -138,8 +138,7 @@ class EditFiles(QWidget):
         self.main_app = main_app
         self.setWindowTitle("Edit File(s)")
         self.setWindowIcon(QIcon(f"{self.main_app.icons_path}/cassette.png"))
-        self.resize(1300, 800)
-        self.setMinimumSize(1300, 800)
+        
 
         self.button_to_options_mapping = {}
 
@@ -153,6 +152,8 @@ class EditFiles(QWidget):
         self.grid = QGridLayout(self.content_widget)
         
         self.load_sound_options()
+
+        self.resize(QSize(1400, 1000))
 
         with open("themes/style_sheet_edit_files.qss", "r") as f:
             self.setStyleSheet(f.read())
@@ -226,11 +227,7 @@ class EditFiles(QWidget):
         self.grid.addWidget(self.heading_line, 0, 0, 1, -1)
         self.grid.addWidget(self.underline, 2, 0, 1, -1)
 
-        self.grid.addWidget(self.vertical_separator, 0, 0, -1, 1, alignment = Qt.AlignmentFlag.AlignRight)
-        self.grid.addWidget(self.vertical_separator2, 0, 2, -1, 1, alignment = Qt.AlignmentFlag.AlignRight)
-        self.grid.addWidget(self.vertical_separator3, 0, 0, -1, 1, alignment = Qt.AlignmentFlag.AlignLeft)
-        self.grid.addWidget(self.vertical_separator4, 0, 3, -1, 1, alignment = Qt.AlignmentFlag.AlignRight)
-        self.grid.addWidget(self.vertical_separator5, 0, 2, -1, 1, alignment = Qt.AlignmentFlag.AlignLeft)
+        
 
         curr_grid = 3
         
@@ -283,10 +280,17 @@ class EditFiles(QWidget):
                                                           "modify_length": edit_sound_length_button,
                                                           "pos": curr_grid,
                                                         }
+
             
             curr_grid += 1
 
         self.grid.addWidget(self.bottom_line, curr_grid, 0, 1, -1)
+
+        self.grid.addWidget(self.vertical_separator, 0, 0, -1, 1, alignment = Qt.AlignmentFlag.AlignRight)
+        self.grid.addWidget(self.vertical_separator2, 0, 2, -1, 1, alignment = Qt.AlignmentFlag.AlignRight)
+        self.grid.addWidget(self.vertical_separator3, 0, 0, -1, 1, alignment = Qt.AlignmentFlag.AlignLeft)
+        self.grid.addWidget(self.vertical_separator4, 0, 3, -1, 1, alignment = Qt.AlignmentFlag.AlignRight)
+        self.grid.addWidget(self.vertical_separator5, 0, 2, -1, 1, alignment = Qt.AlignmentFlag.AlignLeft)
 
         with open("themes/style_sheet_edit_files.qss", "r") as f:
             self.setStyleSheet(f.read())
@@ -297,7 +301,9 @@ class EditFiles(QWidget):
         vertical_separator = QFrame()
         vertical_separator.setFrameShape(QFrame.VLine)
         vertical_separator.setFrameShadow(QFrame.Plain)
-        vertical_separator.setStyleSheet("color: gray; background-color: gray;")
+        vertical_separator.setStyleSheet("color: gray; background-color: gray; padding: 50px")
+        vertical_separator.setFixedWidth(4)
+        
 
         return vertical_separator
     
@@ -308,6 +314,7 @@ class EditFiles(QWidget):
         horizontal_separator.setFrameShape(QFrame.HLine)
         horizontal_separator.setFrameShadow(QFrame.Plain)
         horizontal_separator.setStyleSheet("color: gray; background-color: gray; padding-left: 50px;")
+        horizontal_separator.setFixedHeight(4)
 
         return horizontal_separator
     
@@ -877,10 +884,13 @@ class MainWindow(QMainWindow):
             row, col = divmod(idx, 3)
             self.grid.addWidget(btn, row, col)
             self.sound_buttons[name] = {"path": path, "emoji_path": icon_path, "duration": duration, "file_type": f".{path.split(".")[-1]}"}
-            
-    
+
+
 
     def build_home_view(self):
+
+        self.resize(QSize(1400, 450))
+
         self.layout = QVBoxLayout()
 
         self.content_widget = QWidget()
@@ -934,25 +944,21 @@ class MainWindow(QMainWindow):
         
         
     def edit_files(self):
-        
-        # self.external_window = EditFiles(self)
-        # self.external_window.show()
 
         with open("themes/style_sheet_edit_files.qss", "r") as f:
             self.setStyleSheet(f.read())
 
         self.setCentralWidget(EditFiles(self))
-        
+        self.resize(QSize(1400, 500))
         
         
     def settings_config(self):
-        
-        # self.external_window = Settings(self)
-        # self.external_window.show()
+    
         with open("themes/style_sheet_settings.qss", "r") as f:
             self.setStyleSheet(f.read())
 
         self.setCentralWidget(Settings(self))
+
 
     def stop_sounds(self):
         print("Stopping sound(s)")

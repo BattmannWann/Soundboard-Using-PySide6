@@ -112,3 +112,14 @@ QToolBar {
 
     font-family: 'Roboto'
 }
+
+
+
+/* === Vertical and Horizontal Separators */
+
+QFrame#Separator {
+
+    color: gray;
+    padding: 10px;
+    
+}
