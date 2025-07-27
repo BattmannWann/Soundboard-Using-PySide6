@@ -36,6 +36,7 @@ import shutil
 import numpy as np
 from mutagen import File as MutagenFile
 import getpass
+import traceback
 
 #--------------------------------------------------------------------
 
@@ -103,6 +104,8 @@ class Settings(QWidget):
         
     def save(self):
 
+        print(f"\n\n Main app is {self.main_app} \n\n and I can access it, showing the username: {self.main_app.settings["username"]}")
+
         try:
 
             self.main_app.settings["default_output"] = self.output_audio_option.currentIndex()
@@ -117,7 +120,6 @@ class Settings(QWidget):
             if self.username.text().strip() != "":
 
                 self.main_app.settings["username"] = self.username.text()
-                self.main_app.welcome_label.setText(f"Welcome {self.username.text()}")
             
             self.main_app.save_settings()
 
@@ -125,7 +127,9 @@ class Settings(QWidget):
             
 
         except Exception as e:
-            QMessageBox.warning(self, "Error", f"Unable to save settings, see: {e}")
+
+            error_msg = traceback.format_exc()
+            QMessageBox.warning(self, "Error", f"Unable to save settings, see: {e} \n\n and see: {error_msg}")
 
         
         
@@ -812,13 +816,13 @@ class MainWindow(QMainWindow):
     def set_volume(self, value):
         print("Value: ", value/100)
         self.settings["volume"] = value/100
-        self.load_sounds()
+        # self.load_sounds()
 
     
     def load_sounds(self):
         
-        for i in reversed(range(self.grid.count())):
-            self.grid.itemAt(i).widget().setParent(None)
+        # for i in reversed(range(self.grid.count())):
+        #     self.grid.itemAt(i).widget().setParent(None)
 
         if not os.path.exists(self.sounds_path):
 
