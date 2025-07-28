@@ -167,7 +167,11 @@ QSlider[class="VolumeSlider"]::sub-page:horizontal {
 QToolBar {
 
     font-family: 'Roboto'
+    border-radius: 8px;
 }
+
+
+
 
     
 

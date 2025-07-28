@@ -104,8 +104,6 @@ class Settings(QWidget):
         
     def save(self):
 
-        print(f"\n\n Main app is {self.main_app} \n\n and I can access it, showing the username: {self.main_app.settings["username"]}")
-
         try:
 
             self.main_app.settings["default_output"] = self.output_audio_option.currentIndex()
@@ -127,9 +125,7 @@ class Settings(QWidget):
             
 
         except Exception as e:
-
-            error_msg = traceback.format_exc()
-            QMessageBox.warning(self, "Error", f"Unable to save settings, see: {e} \n\n and see: {error_msg}")
+            QMessageBox.warning(self, "Error", f"Unable to save settings, see: {e}")
 
         
         
@@ -343,8 +339,8 @@ class EditFiles(QWidget):
 
                 ok_box.exec()
 
-                self.main_app.load_sounds()
                 self.main_app.edit_files()
+                
         
         except Exception as e:
             
@@ -361,12 +357,13 @@ class EditFiles(QWidget):
         self.window = QWidget()
         self.window.resize(900,100)
         self.window.setWindowTitle(f"Renaming: '{name.text()}'")
+        self.window.setWindowIcon(QIcon(f"{self.main_app.icons_path}/cassette.png"))
         self.window.show()
         
         self.grid = QGridLayout()
         self.window.setLayout(self.grid)
         
-        self.sound_name_label = QLabel(f"Original Name: {name.text()} ")
+        self.sound_name_label = QLabel(f"Original Name: '{name.text()[:30]}...' ")
         self.rename_box = QLineEdit()
         self.rename_box.setPlaceholderText("Enter new sound name here...")
         
@@ -378,11 +375,13 @@ class EditFiles(QWidget):
         self.grid.addWidget(self.rename_box, 0, 1)
         self.grid.addWidget(self.save_button, 1, 1, alignment = Qt.AlignmentFlag.AlignCenter)
         
+        with open("themes/style_sheet_edit_options.qss", "r") as f:
+            self.window.setStyleSheet(f.read())
+        
         
     def save_rename(self, original):
             
         original_path = f"{self.main_app.sound_buttons[original.text()]["path"]}"
-        print(f"\n\n The path is {original_path}. The original is {original.text()} \n\n")
         
         file_type = self.main_app.sound_buttons[original.text()]["file_type"]
         
@@ -398,8 +397,6 @@ class EditFiles(QWidget):
                     
                 os.rename(original_path, new_path)
                 self.main_app.sound_buttons[f"{self.rename_box.text()}"] = self.main_app.sound_buttons.pop(f"{original.text()}")
-                
-                self.main_app.load_sounds()
                 
                 QMessageBox.information(self, "Success!", f"Your sound '{original.text()}'  has been renamed to '{self.rename_box.text()}' ")
                 self.window.close()
@@ -417,75 +414,9 @@ class EditFiles(QWidget):
     
     def edit_sound_length(self, name, duration):
         
-        QSS = """
-                QSlider {
-                    min-height: 20px;
-                }
-
-                QSlider::groove:horizontal {
-                    border: 0px;
-                    background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #888, stop:1 #ddd);
-                    height: 20px;
-                    border-radius: 10px;
-                }
-
-                QSlider::handle {
-                    background: qradialgradient(cx:0, cy:0, radius: 1.2, fx:0.35,
-                                                fy:0.3, stop:0 #eef, stop:1 #002);
-                    height: 20px;
-                    width: 20px;
-                    border-radius: 10px;
-                }
-
-                QSlider::sub-page:horizontal {
-                    background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #227, stop:1 #77a);
-                    border-top-left-radius: 10px;
-                    border-bottom-left-radius: 10px;
-                }
-
-                QDoubleRangeSlider {
-                    qproperty-barColor: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #227, stop:1 #77a);
-                    padding-left: 20px;
-                }
-                
-                
-                QPushButton {
-                font-family: 'Roboto';
-                background-color: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #227, stop:1 #77a);
-                color: white;
-                font-size: 14px;
-                padding: 8px 16px;
-                border-radius: 6px;
-                border: none;
-                font-weight: bold;
-            
-                }
-
-                QPushButton:hover {
-                    background-color: #357ABD;
-                    
-                }
-
-                QPushButton:pressed {
-                    background-color: #2C5F9E;
-                
-                }
-
-                QPushButton:disabled {
-                    background-color: #B0C4DE;
-                    color: #eee;
-                }
-                
-                QWidget {
-                    font-family: 'Roboto';
-
-                }
-
-            """
-        
         self.window = QWidget()
-        self.window.setFixedSize(800,90)
-        self.window.setStyleSheet(QSS)
+        self.window.setFixedSize(QSize(800,110))
+        self.window.setWindowIcon(QIcon(f"{self.main_app.icons_path}/cassette.png"))
             
         self.window.setWindowTitle(f"Editing Length of  sound '{name.text()}'")
         self.window.show()
@@ -500,7 +431,7 @@ class EditFiles(QWidget):
         self.curr_len_label = QLabel(f"Length of '{name.text()[:25]}': {duration.text()}")
         
         self.length_slider = QDoubleRangeSlider(Qt.Orientation.Horizontal)
-        self.length_slider.setFixedSize(100,20)
+        self.length_slider.setFixedSize(200,20)
         self.length_slider.valueChanged.connect(self.length_slider_val_changed)
         
         
@@ -535,10 +466,13 @@ class EditFiles(QWidget):
         
         self.grid.addWidget(self.preview_button, 0, 0, Qt.AlignmentFlag.AlignLeft)
         self.grid.addWidget(self.curr_len_label, 0, 0,Qt.AlignmentFlag.AlignHCenter)
-        self.grid.addWidget(self.length_slider, 0, 0, Qt.AlignmentFlag.AlignRight)
+        self.grid.addWidget(self.length_slider, 0, 1, Qt.AlignmentFlag.AlignRight)
         self.grid.addWidget(self.len_slider_label, 0, 1, Qt.AlignmentFlag.AlignLeft)
         self.grid.addWidget(self.save_length_button, 1, 1, Qt.AlignmentFlag.AlignRight)
         self.grid.addWidget(self.revert_sound_button, 1, 0, Qt.AlignmentFlag.AlignCenter)
+        
+        with open("themes/style_sheet_edit_options.qss", "r") as f:
+            self.window.setStyleSheet(f.read())
         
         
         
@@ -636,9 +570,9 @@ class EditFiles(QWidget):
                 ok_box.exec()
                 
                 self.window.close()
-                
-                self.main_app.load_sounds()
                 self.main_app.edit_files()
+                
+                
                 
                 
         except Exception as e:
@@ -674,9 +608,6 @@ class EditFiles(QWidget):
                 shutil.move(f"{self.main_app.unedited_sounds_path}/{name}{file_type}", f"{self.main_app.sounds_path}/")
                 
                 ok_box.exec()
-                
-                self.main_app.load_sounds()
-                self.load_sound_options()
                 
         except Exception as e:
             
