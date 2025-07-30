@@ -238,11 +238,9 @@ class EditFiles(QWidget):
             
             emoji = QLabel()
 
-            if f"{sound_name}.png" in self.emoticons_list:
-                emoji.setPixmap(QPixmap(f"{self.main_app.icons_path}/{key}.png").scaled(40,40))
+            if "emoji" in self.main_app.sound_buttons[key].keys() and self.main_app.sound_buttons[key]["emoji"] != "":
+                emoji.setPixmap(QPixmap(f"{value["emoji"]}").scaled(40,40))
 
-            else:
-                emoji.setPixmap(QPixmap(f"{self.main_app.icons_path}/angry.png").scaled(40,40))
 
             emoji.setAlignment(Qt.AlignmentFlag.AlignHCenter)
             
@@ -271,7 +269,7 @@ class EditFiles(QWidget):
             edit_emoji_button = QPushButton()
             edit_emoji_button.setIcon(QIcon(f"{self.main_app.icons_path}/Edit_Emoji.png"))
             edit_emoji_button.setStatusTip("Change Emoji/Picture")
-            edit_emoji_button.clicked.connect(lambda _, name = sound_name, button = edit_emoji_button: self.change_emoji(name, button))
+            edit_emoji_button.clicked.connect(lambda _, name = sound_name, emoji = emoji: self.change_emoji(name, emoji))
             edit_emoji_button.setFixedSize(40, 20)
             edit_emoji_button.setStyleSheet("margin-left: 10px;")
             
@@ -327,23 +325,25 @@ class EditFiles(QWidget):
         return horizontal_separator
     
     
-    def change_emoji(self, name, button):
+    def change_emoji(self, name, emoji):
         
         file_path, _ = QFileDialog.getOpenFileName(self, f"Select Image for {name.text()}", "", "Image Files (*.png *.jpg *.jpeg)")
+        print(f"\n\n{name.text()}\n\n")
         
         if file_path:
             
-            #destination = os.path.join(self.main_app.icons_path, filename)
-            print(file_path)
+            print(file_path, "\n\n")
                 
             try:
                 #shutil.copy(path, destination)
-                button.setIcon(QIcon(f"{file_path}"))
+                emoji.setPixmap(QPixmap(file_path).scaled(40,40))
+                self.main_app.sound_buttons[name.text()]["emoji"] = file_path
                 self.main_app.edit_files()
                     
                     
             except Exception as e:
-                QMessageBox.warning(self, "Error", f"Failed to change icon to {file_path}:\n{e}")
+                error_msg = traceback.format_exc()
+                QMessageBox.warning(self, "Error", f"Failed to change icon to {file_path}:\n{e}, \n\n and see: {error_msg}")
         
         
     
@@ -719,7 +719,7 @@ class MainWindow(QMainWindow):
         self.addToolBar(toolbar)
 
         home_button = QAction(QIcon("media/images/home_icon.png"), "", self)
-        home_button.triggered.connect(self.build_home_view)
+        home_button.triggered.connect(self.load_home_view)
 
         toolbar.addAction(home_button)
         toolbar.addSeparator()
@@ -834,20 +834,20 @@ class MainWindow(QMainWindow):
                 print(f"Failed to read {file}: {e}")
                 duration = None
 
-            icon_path = os.path.join(self.icons_path, name + ".png")
             btn = QPushButton(f" {name[:40]}")
 
             btn.setProperty("class", "SoundButton")
-            
-            if os.path.exists(icon_path):
-                btn.setIcon(QIcon(icon_path))
-                btn.setIconSize(QSize(300, 35))
                 
             btn.clicked.connect(lambda _, p=path, v = self.settings["volume"]: self.play_sound(p, v))
 
             row, col = divmod(idx, 3)
             self.grid.addWidget(btn, row, col)
-            self.sound_buttons[name] = {"path": path, "emoji_path": icon_path, "duration": duration, "file_type": f".{path.split(".")[-1]}"}
+
+            if name not in self.sound_buttons.keys():
+                self.sound_buttons[name] = {"path": path, "emoji": "", "duration": duration, "file_type": f".{path.split(".")[-1]}"}
+
+            if self.sound_buttons[name]["emoji"] != "":
+                btn.setIcon(QIcon(self.sound_buttons[name]["emoji"]))
 
 
 
@@ -885,6 +885,46 @@ class MainWindow(QMainWindow):
 
         with open("themes/style_sheet_main_app.qss", "r") as f:
             self.setStyleSheet(f.read())
+
+    
+    def load_home_view(self):
+
+        self.resize(QSize(1400, 450))
+
+        self.layout = QVBoxLayout()
+
+        self.content_widget = QWidget()
+        self.grid = QGridLayout(self.content_widget)
+        self.grid.setHorizontalSpacing(50)
+        self.grid.setVerticalSpacing(20)
+
+        self.scroll_area = QScrollArea()
+        self.scroll_area.setWidgetResizable(True)
+        self.scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+
+        self.welcome_label = QLabel(f"Welcome {self.settings['username']}!")
+        welcome_font = self.welcome_label.font()
+        welcome_font.setPointSize(30)
+        self.welcome_label.setFont(welcome_font)
+        self.welcome_label.setObjectName("MainTitle")
+
+        self.layout.addWidget(self.welcome_label)
+
+        self.load_sounds()
+        self.scroll_area.setWidget(self.content_widget)
+        self.layout.addWidget(self.scroll_area)
+
+        layout_widget = QWidget()
+        layout_widget.setLayout(self.layout)
+        self.setCentralWidget(layout_widget)
+
+        with open("themes/style_sheet_main_app.qss", "r") as f:
+            self.setStyleSheet(f.read())
+
+        
+
+
 
 
         
