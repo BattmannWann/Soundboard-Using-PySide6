@@ -268,7 +268,15 @@ class EditFiles(QWidget):
             edit_sound_length_button.setFixedSize(70, 20)
             edit_sound_length_button.setStyleSheet("margin-right: 5px;")
             
-            self.grid.addWidget(emoji, curr_grid, 0)            
+            edit_emoji_button = QPushButton()
+            edit_emoji_button.setIcon(QIcon(f"{self.main_app.icons_path}/Edit_Emoji.png"))
+            edit_emoji_button.setStatusTip("Change Emoji/Picture")
+            edit_emoji_button.clicked.connect(lambda _, name = sound_name, button = edit_emoji_button: self.change_emoji(name, button))
+            edit_emoji_button.setFixedSize(40, 20)
+            edit_emoji_button.setStyleSheet("margin-left: 10px;")
+            
+            self.grid.addWidget(edit_emoji_button, curr_grid, 0, Qt.AlignmentFlag.AlignLeft)
+            self.grid.addWidget(emoji, curr_grid, 0, Qt.AlignmentFlag.AlignCenter)            
             self.grid.addWidget(sound_name, curr_grid, 1)
             self.grid.addWidget(duration, curr_grid, 2)
             self.grid.addWidget(remove_button, curr_grid, 3, alignment = Qt.AlignmentFlag.AlignLeft)
@@ -317,6 +325,27 @@ class EditFiles(QWidget):
         horizontal_separator.setFixedHeight(4)
 
         return horizontal_separator
+    
+    
+    def change_emoji(self, name, button):
+        
+        file_path, _ = QFileDialog.getOpenFileName(self, f"Select Image for {name.text()}", "", "Image Files (*.png *.jpg *.jpeg)")
+        
+        if file_path:
+            
+            #destination = os.path.join(self.main_app.icons_path, filename)
+            print(file_path)
+                
+            try:
+                #shutil.copy(path, destination)
+                button.setIcon(QIcon(f"{file_path}"))
+                self.main_app.edit_files()
+                    
+                    
+            except Exception as e:
+                QMessageBox.warning(self, "Error", f"Failed to change icon to {file_path}:\n{e}")
+        
+        
     
     
     def delete_sound(self, name):
