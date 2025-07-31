@@ -335,9 +335,12 @@ class EditFiles(QWidget):
             print(file_path, "\n\n")
                 
             try:
-                #shutil.copy(path, destination)
+                
                 emoji.setPixmap(QPixmap(file_path).scaled(40,40))
                 self.main_app.sound_buttons[name.text()]["emoji"] = file_path
+                self.main_app.button_icons[name.text()] = file_path
+
+                self.main_app.save_icons()
                 self.main_app.edit_files()
                     
                     
@@ -413,7 +416,6 @@ class EditFiles(QWidget):
         original_path = f"{self.main_app.sound_buttons[original.text()]["path"]}"
         
         file_type = self.main_app.sound_buttons[original.text()]["file_type"]
-        
         new_path = f"{self.main_app.sounds_path}/{self.rename_box.text()}{file_type}"
         
         try:
@@ -426,6 +428,13 @@ class EditFiles(QWidget):
                     
                 os.rename(original_path, new_path)
                 self.main_app.sound_buttons[f"{self.rename_box.text()}"] = self.main_app.sound_buttons.pop(f"{original.text()}")
+
+                if original.text() in self.main_app.button_icons.keys():
+
+                    renamed_val = self.main_app.button_icons.pop(original.text())
+                    self.main_app.button_icons[self.rename_box.text()] = renamed_val
+
+                    self.main_app.save_icons()
                 
                 QMessageBox.information(self, "Success!", f"Your sound '{original.text()}'  has been renamed to '{self.rename_box.text()}' ")
                 self.window.close()
@@ -509,6 +518,7 @@ class EditFiles(QWidget):
         
         print(f"Value is: {value[0]} - {value[1]}")
         self.len_slider_label.setText(f"Between {round(value[0], 2)}s and {round(value[1], 2)}s")
+
         
     def preview_sound(self, name, slider):
         
@@ -661,6 +671,7 @@ class MainWindow(QMainWindow):
         super().__init__()
         
         self.SETTINGS_FILE = "settings.json"
+        self.BUTTON_ICONS_FILE = "button_images.json"
         
         DEFAULT_SETTINGS = {
             "volume": 1.0,
@@ -691,13 +702,24 @@ class MainWindow(QMainWindow):
             settings["default_output"] = default_output
             settings["default_input"] = default_input
             settings["username"] = username
+
+        if os.path.exists(self.BUTTON_ICONS_FILE):
+
+            with open(self.BUTTON_ICONS_FILE, "r") as f:
+                button_icons = json.load(f)
+
+        else:
+
+            button_icons = {}
             
         
         self.icons_path = "media/images"
         self.sounds_path = "sounds"
         self.trimmed_sounds_path = "trimmed_sounds"
         self.unedited_sounds_path = "unedited_sounds"
+
         self.sound_buttons = {}
+        self.button_icons = button_icons
         self.settings = settings
         self.save_settings()
         
@@ -719,7 +741,7 @@ class MainWindow(QMainWindow):
         self.addToolBar(toolbar)
 
         home_button = QAction(QIcon("media/images/home_icon.png"), "", self)
-        home_button.triggered.connect(self.load_home_view)
+        home_button.triggered.connect(self.build_home_view)
 
         toolbar.addAction(home_button)
         toolbar.addSeparator()
@@ -846,6 +868,9 @@ class MainWindow(QMainWindow):
             if name not in self.sound_buttons.keys():
                 self.sound_buttons[name] = {"path": path, "emoji": "", "duration": duration, "file_type": f".{path.split(".")[-1]}"}
 
+            if name in self.button_icons.keys():
+                self.sound_buttons[name]["emoji"] = self.button_icons[name]
+
             if self.sound_buttons[name]["emoji"] != "":
                 btn.setIcon(QIcon(self.sound_buttons[name]["emoji"]))
 
@@ -885,45 +910,6 @@ class MainWindow(QMainWindow):
 
         with open("themes/style_sheet_main_app.qss", "r") as f:
             self.setStyleSheet(f.read())
-
-    
-    def load_home_view(self):
-
-        self.resize(QSize(1400, 450))
-
-        self.layout = QVBoxLayout()
-
-        self.content_widget = QWidget()
-        self.grid = QGridLayout(self.content_widget)
-        self.grid.setHorizontalSpacing(50)
-        self.grid.setVerticalSpacing(20)
-
-        self.scroll_area = QScrollArea()
-        self.scroll_area.setWidgetResizable(True)
-        self.scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self.scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
-
-        self.welcome_label = QLabel(f"Welcome {self.settings['username']}!")
-        welcome_font = self.welcome_label.font()
-        welcome_font.setPointSize(30)
-        self.welcome_label.setFont(welcome_font)
-        self.welcome_label.setObjectName("MainTitle")
-
-        self.layout.addWidget(self.welcome_label)
-
-        self.load_sounds()
-        self.scroll_area.setWidget(self.content_widget)
-        self.layout.addWidget(self.scroll_area)
-
-        layout_widget = QWidget()
-        layout_widget.setLayout(self.layout)
-        self.setCentralWidget(layout_widget)
-
-        with open("themes/style_sheet_main_app.qss", "r") as f:
-            self.setStyleSheet(f.read())
-
-        
-
 
 
 
@@ -977,7 +963,17 @@ class MainWindow(QMainWindow):
                 json.dump(self.settings, f, indent=4) 
 
         except Exception as e:
-            QMessageBox.warning(self, f"Error", "Unable to save settings, see: {e}")
+            QMessageBox.warning(self, f"Error", f"Unable to save settings, see: {e}")
+
+    
+    def save_icons(self):
+
+        try:
+            with open(self.BUTTON_ICONS_FILE, "w") as f:
+                json.dump(self.button_icons, f, indent = 4)
+
+        except Exception as e:
+            QMessageBox.warning(self, f"Error", f"Unable to save icon path, see: {e}")
                 
                 
     def play_sound(self, path, volume_level = 1.0):
