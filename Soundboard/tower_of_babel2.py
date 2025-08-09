@@ -41,6 +41,115 @@ import traceback
 #--------------------------------------------------------------------
 
 
+class MultiDevicePlayer:
+    
+    def __init__(self):
+        self.stop_event = threading.Event()
+        self.threads = []
+
+
+    def play_sound(self, path, devices, volume=1.0):
+        
+        """
+        Play the given sound file on the input and output device simultaneously 
+        """
+
+        
+        try:
+            data, samplerate = sf.read(path, dtype='float32')
+        except Exception as e:
+            print(f"Failed to read audio file: {e}")
+            return
+
+        if data.ndim == 1:
+            data = np.expand_dims(data, axis=1)
+
+        data = np.clip(data * volume, -1.0, 1.0)
+        self.stop_event.clear()
+
+        self.threads = []
+        
+        for device in devices:
+            
+            t = threading.Thread(target=self._play_on_device,
+                                 args=(data.copy(), samplerate, device))
+            t.start()
+            self.threads.append(t)
+
+
+    def _play_on_device(self, data, samplerate, device):
+        
+        try:
+            
+            device_info = sd.query_devices(device, 'output')
+            max_channels = device_info['max_output_channels']
+
+            data = self._match_channels(data, max_channels)
+
+            with sd.OutputStream(device=device,
+                                 samplerate=samplerate,
+                                 channels=data.shape[1],
+                                 dtype='float32') as stream:
+
+                
+                blocksize = 1024
+                idx = 0
+                
+                while idx < len(data):
+                    
+                    if self.stop_event.is_set():
+                        break
+                    
+                    chunk = data[idx:idx+blocksize]
+                    stream.write(chunk)
+                    idx += blocksize
+
+        except Exception as e:
+            print(f"Error playing sound on device {device}: {e}")
+
+
+    def _match_channels(self, data, max_channels):
+        
+        """
+        Downmix or upmix audio to match the device's max channels.
+        """
+        
+        num_channels = data.shape[1]
+
+        if num_channels == max_channels:
+            return data
+        
+        elif max_channels == 1:
+            return data.mean(axis=1, keepdims=True) 
+        
+        elif max_channels == 2:
+            
+            mono = data.mean(axis=1)
+            return np.stack((mono, mono), axis=1)  
+        
+        else:
+            
+            if num_channels > max_channels:
+                return data[:, :max_channels]
+            
+            else:
+                
+                pad_width = max_channels - num_channels
+                return np.hstack((data, np.zeros((len(data), pad_width), dtype=data.dtype)))
+
+
+    def stop(self):
+    
+        """
+        Signal all threads to stop playback.
+        """
+        
+        self.stop_event.set()
+        
+        for t in self.threads:
+            t.join()
+            
+
 class Settings(QWidget):
     
     def __init__(self, main_app):
@@ -720,6 +829,8 @@ class MainWindow(QMainWindow):
         self.sounds_path = "sounds"
         self.trimmed_sounds_path = "trimmed_sounds"
         self.unedited_sounds_path = "unedited_sounds"
+        
+        self.player = MultiDevicePlayer()
 
         self.sound_buttons = {}
         self.button_icons = button_icons
@@ -771,7 +882,7 @@ class MainWindow(QMainWindow):
 
         stop_sounds_button = QAction("Stop Sound(s)", self)
         stop_sounds_button.setStatusTip("Stop playing the current sound(s)")
-        stop_sounds_button.triggered.connect(self.stop_sounds)
+        stop_sounds_button.triggered.connect(self.player.stop)
 
         toolbar.addAction(stop_sounds_button)
         toolbar.addSeparator()
@@ -858,12 +969,13 @@ class MainWindow(QMainWindow):
             except Exception as e:
                 print(f"Failed to read {file}: {e}")
                 duration = None
+            
+            devices = [self.settings["default_input"], self.settings["default_output"]]
 
             btn = QPushButton(f" {name[:40]}")
-
             btn.setProperty("class", "SoundButton")
                 
-            btn.clicked.connect(lambda _, p=path, v = self.settings["volume"]: self.play_sound(p, v))
+            btn.clicked.connect(lambda _, p=path, v = self.settings["volume"]: self.player.play_sound(path = p, devices = devices, volume = v))
 
             row, col = divmod(idx, 3)
             self.grid.addWidget(btn, row, col)
@@ -972,102 +1084,6 @@ class MainWindow(QMainWindow):
         except Exception as e:
             QMessageBox.warning(self, f"Error", f"Unable to save icon path, see: {e}")
                 
-                
-    def play_sound(self, path, volume_level = 1.0):
-
-        """
-        This function plays a sound to both the input and output devices
-        """
-
-        self.stop_sounds()
-        self.stop_event.clear()
-        
-        print(f"Volume Level is: {volume_level}")
-
-        try:
-            sound_file = sf.SoundFile(path)
-
-        except Exception as e:
-
-            print(f"Error: could not open sound file {path}, see: {e}.")
-            return
-        
-        def _audio_callback(outdata, frames, time, status):
-
-            """
-            This is a helper function designed to allow the audio driver
-            to get more data
-            """
-
-            if self.stop_event.is_set():
-
-                outdata.fill(0)
-                raise sd.CallbackStop("The stop event has been set")
-            
-            data = sound_file.read(frames, dtype = 'float32')
-            data = np.clip(data * volume_level, -1.0, 1.0)
-
-            if len(data) == 0:
-
-                outdata.fill(0)
-                raise sd.CallbackStop("EOF has been reached")
-            
-            outdata[:] = data 
-
-            if len(data) < len(outdata):
-
-                outdata[len(data):].fill(0)
-
-        def _stream_thread(device, stream_class):
-
-            """
-            Thread target to create and manage a single audio stream.
-            The 'stream_class' will be either sd.OutputStream or 
-            sd.InputStream
-            """
-
-            sound_file.seek(0)
-
-            try:
-
-                with stream_class(
-
-                    samplerate = sound_file.samplerate,
-                    device = device,
-                    channels = sound_file.channels,
-                    callback = _audio_callback
-                ):
-                    
-                    self.stop_event.wait()
-
-            except Exception as e:
-
-                print(f"Error in stream thread for device {device}, see: {e}")
-
-        output_thread = threading.Thread(target = _stream_thread, args = (self.settings["default_output"], sd.OutputStream))
-        input_thread = threading.Thread(target = _stream_thread, args = (self.settings["default_input"], sd.InputStream))
-
-        self.active_threads = [output_thread, input_thread]
-
-        output_thread.start()
-        input_thread.start()
-
-
-    def stop_sounds(self):
-
-        """
-        Stops all current audio being played through threads
-        """
-
-        print("Stopping sound(s)...")
-        self.stop_event.set()
-
-        for thread in self.active_threads:
-            thread.join()
-
-        self.active_threads = []
-        print("Sound(s) stopped.")
-
 
     
         # def _play(device):
