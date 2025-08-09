@@ -669,6 +669,9 @@ class MainWindow(QMainWindow):
     def __init__(self):
         
         super().__init__()
+
+        self.active_threads = []
+        self.stop_event = threading.Event()
         
         self.SETTINGS_FILE = "settings.json"
         self.BUTTON_ICONS_FILE = "button_images.json"
@@ -948,12 +951,6 @@ class MainWindow(QMainWindow):
             self.setStyleSheet(f.read())
 
         self.setCentralWidget(Settings(self))
-
-
-    def stop_sounds(self):
-        print("Stopping sound(s)")
-        
-        sd.stop()
         
         
     def save_settings(self):
@@ -977,26 +974,134 @@ class MainWindow(QMainWindow):
                 
                 
     def play_sound(self, path, volume_level = 1.0):
+
+        """
+        This function plays a sound to both the input and output devices
+        """
+
+        self.stop_sounds()
+        self.stop_event.clear()
         
         print(f"Volume Level is: {volume_level}")
-    
-        def _play(device):
+
+        try:
+            sound_file = sf.SoundFile(path)
+
+        except Exception as e:
+
+            print(f"Error: could not open sound file {path}, see: {e}.")
+            return
+        
+        def _audio_callback(outdata, frames, time, status):
+
+            """
+            This is a helper function designed to allow the audio driver
+            to get more data
+            """
+
+            if self.stop_event.is_set():
+
+                outdata.fill(0)
+                raise sd.CallbackStop("The stop event has been set")
             
+            data = sound_file.read(frames, dtype = 'float32')
+            data = np.clip(data * volume_level, -1.0, 1.0)
+
+            if len(data) == 0:
+
+                outdata.fill(0)
+                raise sd.CallbackStop("EOF has been reached")
+            
+            outdata[:] = data 
+
+            if len(data) < len(outdata):
+
+                outdata[len(data):].fill(0)
+
+        def _stream_thread(device, stream_class):
+
+            """
+            Thread target to create and manage a single audio stream.
+            The 'stream_class' will be either sd.OutputStream or 
+            sd.InputStream
+            """
+
+            sound_file.seek(0)
+
             try:
-                data, samplerate = sf.read(path)
-                data = np.clip(data * volume_level, -1.0, 1.0)
-                
-                sd.play(data, samplerate=samplerate, device=device)
-                sd.wait()
-                
+
+                with stream_class(
+
+                    samplerate = sound_file.samplerate,
+                    device = device,
+                    channels = sound_file.channels,
+                    callback = _audio_callback
+                ):
+                    
+                    self.stop_event.wait()
+
             except Exception as e:
-                print(f"Error playing sound on device {device}: {e}\n")
+
+                print(f"Error in stream thread for device {device}, see: {e}")
+
+        output_thread = threading.Thread(target = _stream_thread, args = (self.settings["default_output"], sd.OutputStream))
+        input_thread = threading.Thread(target = _stream_thread, args = (self.settings["default_input"], sd.InputStream))
+
+        self.active_threads = [output_thread, input_thread]
+
+        output_thread.start()
+        input_thread.start()
 
 
-        threading.Thread(target=_play, args=(self.settings["default_input"],)).start()
-        threading.Thread(target=_play, args=(self.settings["default_output"],)).start()
+    def stop_sounds(self):
+
+        """
+        Stops all current audio being played through threads
+        """
+
+        print("Stopping sound(s)...")
+        self.stop_event.set()
+
+        for thread in self.active_threads:
+            thread.join()
+
+        self.active_threads = []
+        print("Sound(s) stopped.")
+
+
+    
+        # def _play(device):
+            
+        #     try:
+        #         data, samplerate = sf.read(path)
+        #         data = np.clip(data * volume_level, -1.0, 1.0)
+                
+        #         sd.play(data, samplerate=samplerate, device=device)
+
+        #         while sd.get_stream().active:
+
+        #             if self.stop_event == True:
+        #                 sd.stop()
+        #                 break
+
+        #         sd.wait()
+                
+        #     except Exception as e:
+        #         print(f"Error playing sound on device {device}: {e}\n")
+
+
+        # self.stop_event = False
+
+        # threading.Thread(target=_play, args=(self.settings["default_input"],)).start()
+        # threading.Thread(target=_play, args=(self.settings["default_output"],)).start()
         
+
+    # def stop_sounds(self):
+    #     print("Stopping sound(s)")
+
+    #     self.stop_event = True
         
+
     def closeEvent(self, event):
         
         sd.stop()
