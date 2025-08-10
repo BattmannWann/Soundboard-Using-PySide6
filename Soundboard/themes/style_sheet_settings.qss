@@ -6,9 +6,74 @@ QWidget {
     color: #374151;
 }
 
-QComboBox {
 
-    background-color: #d9d9da;
+QComboBox {
+    border: 1px solid #333;
+    border-radius: 4px;
+    padding: 5px;
+    background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #227, stop:1 #77a);
+    color: white;
+}
+
+
+QComboBox:hover {
+    border: 1px solid #357ABD;
+    background-color: #357ABD;
+}
+
+
+QComboBox::down-arrow {
+    /* image: url(path/to/your/down_arrow_icon.png);  */
+    width: 14px;
+    height: 14px;
+}
+
+
+QComboBox QAbstractItemView {
+    background-color: #f9f9f9;
+    color: black;
+    border: 1px solid #ccc;
+    selection-background-color: #ddd; 
+    outline: 0px; 
+}
+
+
+QComboBox QAbstractItemView QScrollBar:vertical {
+    border: none;
+    background: #f1f1f1;
+    width: 12px;
+    margin: 0px 0px 0px 0px;
+    border-radius: 4px;
+}
+
+
+QComboBox QAbstractItemView QScrollBar::handle:vertical {
+    background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #227, stop:1 #77a);
+    min-height: 8px;
+    max-height: 10px;
+    border-radius:4px;
+}
+
+QComboBox QAbstractItemView QScrollBar::handle:vertical:hover {
+    background: #7575a9; 
+}
+
+
+QComboBox QAbstractItemView QScrollBar::add-line:vertical,
+QComboBox QAbstractItemView QScrollBar::sub-line:vertical {
+    border: none;
+    background: none;
+    height: 0px; 
+}
+
+
+QComboBox::item {
+    padding: 8px;
+}
+
+
+QComboBox::item:hover {
+    background-color: #ddd;
 }
 
 QLineEdit {

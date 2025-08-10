@@ -37,6 +37,7 @@ import numpy as np
 from mutagen import File as MutagenFile
 import getpass
 import traceback
+import time
 
 #--------------------------------------------------------------------
 
@@ -53,12 +54,13 @@ class MultiDevicePlayer:
         """
         Play the given sound file on the input and output device simultaneously 
         """
-
         
         try:
             data, samplerate = sf.read(path, dtype='float32')
+            
         except Exception as e:
-            print(f"Failed to read audio file: {e}")
+            
+            QMessageBox.warning(self, "Error", f"Failed to read audio file, see: {e}")
             return
 
         if data.ndim == 1:
@@ -105,7 +107,7 @@ class MultiDevicePlayer:
                     idx += blocksize
 
         except Exception as e:
-            print(f"Error playing sound on device {device}: {e}")
+            QMessageBox.warning(self, "Error", f"There was an error playing sound on device {device}, see: {e}")
 
 
     def _match_channels(self, data, max_channels):
@@ -174,11 +176,11 @@ class Settings(QWidget):
         
         self.input_audio_option = QComboBox()
         self.input_audio_option.addItems(devices)
-        self.input_audio_option.setCurrentIndex(main_app.settings["default_input_info"]["index"])
+        self.input_audio_option.setCurrentIndex(main_app.settings["default_input"])
         
         self.output_audio_option = QComboBox()
         self.output_audio_option.addItems(devices)
-        self.output_audio_option.setCurrentIndex(main_app.settings["default_output_info"]["index"])
+        self.output_audio_option.setCurrentIndex(main_app.settings["default_output"])
         
         save_button = QPushButton("Save")
         save_button.clicked.connect(self.save)
@@ -296,7 +298,6 @@ class EditFiles(QWidget):
         self.emoji.setAlignment(Qt.AlignmentFlag.AlignHCenter)
 
         self.emoticons_list = os.listdir(f"{self.main_app.icons_path}")
-        print(self.emoticons_list)
             
         self.sound_name = QLabel("Name")
         self.sound_name.setAlignment(Qt.AlignmentFlag.AlignHCenter)
@@ -344,17 +345,39 @@ class EditFiles(QWidget):
             
             sound_name = QLabel(key)
             sound_name.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+            sound_name.setObjectName("TableContentLabels")
             
             emoji = QLabel()
 
-            if "emoji" in self.main_app.sound_buttons[key].keys() and self.main_app.sound_buttons[key]["emoji"] != "":
-                emoji.setPixmap(QPixmap(f"{value["emoji"]}").scaled(40,40))
-
-
-            emoji.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+            if "emoji" in self.main_app.sound_buttons[key].keys(): 
+                emoji.setPixmap(QPixmap(f"{value["emoji"]}").scaled(70,70))
+            
+            edit_emoji_button = QPushButton()
+            edit_emoji_button.setIcon(QIcon(f"{self.main_app.icons_path}/Edit_Emoji.png"))
+            edit_emoji_button.setStatusTip("Change Emoji/Picture")
+            edit_emoji_button.clicked.connect(lambda _, name = sound_name, emoji = emoji: self.change_emoji(name, emoji))
+            edit_emoji_button.setFixedSize(40, 30)
+            edit_emoji_button.setStyleSheet("margin-left: 10px; padding-right: 10px;")
+            
+            remove_emoji_button = QPushButton()
+            remove_emoji_button.setIcon(QIcon(f"{self.main_app.icons_path}/Remove_Icon.png"))
+            remove_emoji_button.setStatusTip("Remove the set icon")
+            remove_emoji_button.clicked.connect(lambda _, name = sound_name: self.remove_emoji(name))
+            remove_emoji_button.setFixedSize(40, 30)
+            
+            emoji_widgets_box = QWidget()
+            emoji_widgets_layout = QHBoxLayout(emoji_widgets_box)
+            
+            emoji_widgets_layout.setContentsMargins(0, 0, 0, 0)
+            emoji_widgets_layout.setSpacing(10)
+            
+            emoji_widgets_layout.addWidget(edit_emoji_button)
+            emoji_widgets_layout.addWidget(remove_emoji_button)
+            emoji_widgets_layout.addWidget(emoji) 
             
             duration = QLabel(f"{value["duration"]}s")
             duration.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+            duration.setObjectName("TableContentLabels")
             
             remove_button = QPushButton()
             remove_button.setIcon(QIcon(f"{self.main_app.icons_path}/cross.png"))
@@ -375,20 +398,20 @@ class EditFiles(QWidget):
             edit_sound_length_button.setFixedSize(70, 20)
             edit_sound_length_button.setStyleSheet("margin-right: 5px;")
             
-            edit_emoji_button = QPushButton()
-            edit_emoji_button.setIcon(QIcon(f"{self.main_app.icons_path}/Edit_Emoji.png"))
-            edit_emoji_button.setStatusTip("Change Emoji/Picture")
-            edit_emoji_button.clicked.connect(lambda _, name = sound_name, emoji = emoji: self.change_emoji(name, emoji))
-            edit_emoji_button.setFixedSize(40, 20)
-            edit_emoji_button.setStyleSheet("margin-left: 10px;")
+            option_widgets_box = QWidget()
+            option_widgets_box_layout = QHBoxLayout(option_widgets_box)
             
-            self.grid.addWidget(edit_emoji_button, curr_grid, 0, Qt.AlignmentFlag.AlignLeft)
-            self.grid.addWidget(emoji, curr_grid, 0, Qt.AlignmentFlag.AlignCenter)            
+            option_widgets_box_layout.setContentsMargins(0, 0, 0, 0)
+            option_widgets_box_layout.setSpacing(10)
+            
+            option_widgets_box_layout.addWidget(remove_button)
+            option_widgets_box_layout.addWidget(edit_name_button)
+            option_widgets_box_layout.addWidget(edit_sound_length_button)
+          
+            self.grid.addWidget(emoji_widgets_box, curr_grid, 0)          
             self.grid.addWidget(sound_name, curr_grid, 1)
             self.grid.addWidget(duration, curr_grid, 2)
-            self.grid.addWidget(remove_button, curr_grid, 3, alignment = Qt.AlignmentFlag.AlignLeft)
-            self.grid.addWidget(edit_name_button, curr_grid, 3, alignment = Qt.AlignmentFlag.AlignHCenter)
-            self.grid.addWidget(edit_sound_length_button, curr_grid, 3, alignment = Qt.AlignmentFlag.AlignRight)
+            self.grid.addWidget(option_widgets_box, curr_grid, 3)
 
             self.button_to_options_mapping[sound_name] = {"remove": remove_button, 
                                                           "rename": edit_name_button, 
@@ -437,11 +460,8 @@ class EditFiles(QWidget):
     def change_emoji(self, name, emoji):
         
         file_path, _ = QFileDialog.getOpenFileName(self, f"Select Image for {name.text()}", "", "Image Files (*.png *.jpg *.jpeg)")
-        print(f"\n\n{name.text()}\n\n")
         
         if file_path:
-            
-            print(file_path, "\n\n")
                 
             try:
                 
@@ -456,6 +476,34 @@ class EditFiles(QWidget):
             except Exception as e:
                 error_msg = traceback.format_exc()
                 QMessageBox.warning(self, "Error", f"Failed to change icon to {file_path}:\n{e}, \n\n and see: {error_msg}")
+                
+                
+    def remove_emoji(self, name):
+        
+        if self.main_app.sound_buttons[name.text()]["emoji"] == f"{self.main_app.icons_path}/Icon_Placeholder.png":
+            
+            QMessageBox.information(self, "No Image Set", f"No image has been set for '{name.text()}'. \n\n The icon cannot be removed.")
+            return
+        
+        warning_msg = QMessageBox.warning(self, "Warning", f"This will remove the icon set for '{name.text()}', are you sure you'd like to continue?", 
+                                          QMessageBox.Yes | QMessageBox.Cancel)
+        
+        try:
+        
+            if warning_msg == QMessageBox.Yes:
+                
+                self.main_app.sound_buttons[name.text()]["emoji"] = f"{self.main_app.icons_path}/Icon_Placeholder.png"
+                self.main_app.button_icons[name.text()] = f"{self.main_app.icons_path}/Icon_Placeholder.png"
+                
+                self.main_app.save_icons()
+                self.main_app.edit_files()
+                
+                ok_box = QMessageBox.information(self, "Success!", f"The icon for '{name.text()}' has been removed.")
+                
+        except Exception as e:
+            
+            error_msg = traceback.format_exc()
+            QMessageBox.warning(self, "ERROR", f"There was a problem removing the icon for '{name.text()}', \n\n see: {e}, \n\n and see: {error_msg}")
         
         
     
@@ -477,10 +525,12 @@ class EditFiles(QWidget):
                 print(f"Removing {self.main_app.sound_buttons[name.text()]["path"]}...")
                 os.remove(self.main_app.sound_buttons[name.text()]["path"])
                 self.main_app.sound_buttons.pop(name.text())
+                self.main_app.button_icons.pop(name.text())
 
                 ok_box.exec()
 
                 self.main_app.edit_files()
+                self.main_app.save_icons()
                 
         
         except Exception as e:
@@ -504,13 +554,18 @@ class EditFiles(QWidget):
         self.grid = QGridLayout()
         self.window.setLayout(self.grid)
         
-        self.sound_name_label = QLabel(f"Original Name: '{name.text()[:30]}...' ")
+        if len(name.text()) > 30:
+            self.sound_name_label = QLabel(f"Original Name: '{name.text()[:30]}...' ")
+        
+        else:
+            self.sound_name_label = QLabel(f"Original Name: '{name.text()}' ")
+        
         self.rename_box = QLineEdit()
         self.rename_box.setPlaceholderText("Enter new sound name here...")
         
         self.save_button = QPushButton("Save")
         self.save_button.clicked.connect(lambda _, original = name: self.save_rename(original))
-        self.save_button.setFixedSize(70, 20)
+        self.save_button.setFixedSize(70, 30)
         
         self.grid.addWidget(self.sound_name_label, 0, 0)
         self.grid.addWidget(self.rename_box, 0, 1)
@@ -601,7 +656,7 @@ class EditFiles(QWidget):
         self.preview_button = QPushButton()
         self.preview_button.clicked.connect(lambda _, name = name.text(), slider = self.length_slider: self.preview_sound(name, slider))
         
-        self.preview_button.setIcon(QIcon(f"{self.main_app.icons_path}/play_pause.png"))
+        self.preview_button.setIcon(QIcon(f"{self.main_app.icons_path}/Speaker_Icon.svg"))
         self.preview_button.setIconSize(QSize(24, 24))
         self.preview_button.setBaseSize(QSize(15, 10))
         
@@ -698,7 +753,7 @@ class EditFiles(QWidget):
         ok_box.setStandardButtons(QMessageBox.Ok)
         
         warning_msg = QMessageBox.question(self, "Confirm", 
-        f"This action will not modify {name}, but make a copy that will then become the default for this sound. You may revert this at any time. Do you wish to proceed? ",
+        f"This action will modify '{name}'. \n\n You may revert this at any time. Do you wish to proceed? ",
         QMessageBox.Cancel | QMessageBox.Yes)
         
         if self.previewed == False:
@@ -716,6 +771,9 @@ class EditFiles(QWidget):
                 
                 sf.write(f"{self.main_app.sounds_path}/{name}{file_type}", self.trimmed_sounds[name]["trimmed_data"], self.trimmed_sounds[name]["samplerate"])
                 ok_box.exec()
+                
+                duration = self.main_app.get_duration(f"{self.main_app.sounds_path}/{name}{file_type}", name)
+                self.main_app.sound_buttons[name]["duration"] = duration
                 
                 self.window.close()
                 self.main_app.edit_files()
@@ -755,21 +813,27 @@ class EditFiles(QWidget):
                 os.remove(f"{self.main_app.sounds_path}/{name}{file_type}")
                 shutil.move(f"{self.main_app.unedited_sounds_path}/{name}{file_type}", f"{self.main_app.sounds_path}/")
                 
+                duration = self.main_app.get_duration(f"{self.main_app.sounds_path}/{name}{file_type}", name)
+                self.main_app.sound_buttons[name]["duration"] = duration
+                
+                self.main_app.edit_files()
+                
                 ok_box.exec()
                 
         except Exception as e:
             
             not_ok_box = QMessageBox(self)
             not_ok_box.setWindowTitle("ERROR")
-            not_ok_box.setText(f"There has been an error reverting '{name}', this sound likely hasn't been modified yet. \n\nFor additional errors see: {e}")
+            not_ok_box.setText(f"There has been an error reverting '{name}', this sound likely hasn't been modified yet.")
             not_ok_box.setStandardButtons(QMessageBox.Ok)
             
             not_ok_box.exec()  
 
         finally:
-            self.window.close()
             
+            self.window.close()
             self.main_app.edit_files()
+            
             
                
                   
@@ -843,7 +907,6 @@ class MainWindow(QMainWindow):
 
         self.setGeometry(100, 100, 800, 500)
         self.resize(QSize(1400, 450))
-        #self.setMinimumSize((QSize(1400, 450)))
         self.setMaximumSize(QSize(1400, 1000))
 
         self.build_home_view()
@@ -854,7 +917,8 @@ class MainWindow(QMainWindow):
         
         self.addToolBar(toolbar)
 
-        home_button = QAction(QIcon("media/images/home_icon.png"), "", self)
+        home_button = QAction(QIcon("media/images/Home-icon.png"), "", self)
+        home_button.setStatusTip("Home Dashboard")
         home_button.triggered.connect(self.build_home_view)
 
         toolbar.addAction(home_button)
@@ -912,13 +976,25 @@ class MainWindow(QMainWindow):
     def set_volume(self, value):
         print("Value: ", value/100)
         self.settings["volume"] = value/100
-        # self.load_sounds()
+        self.load_sounds()
+        
+        
+    def get_duration(self, path, file):
+        
+        try:
+                audio = MutagenFile(path)
+                
+                if audio is not None and audio.info is not None:
+                    duration = round(audio.info.length, 2)
+                
+        except Exception as e:
+            print(f"Failed to read {file}: {e}")
+            duration = None
+            
+        return duration
 
     
     def load_sounds(self):
-        
-        # for i in reversed(range(self.grid.count())):
-        #     self.grid.itemAt(i).widget().setParent(None)
 
         if not os.path.exists(self.sounds_path):
 
@@ -960,20 +1036,13 @@ class MainWindow(QMainWindow):
             name = os.path.splitext(file)[0]
             path = os.path.join(self.sounds_path, file)
             
-            try:
-                audio = MutagenFile(path)
-                
-                if audio is not None and audio.info is not None:
-                    duration = round(audio.info.length, 2)
-                
-            except Exception as e:
-                print(f"Failed to read {file}: {e}")
-                duration = None
+            duration = self.get_duration(path, file)
             
             devices = [self.settings["default_input"], self.settings["default_output"]]
 
             btn = QPushButton(f" {name[:40]}")
             btn.setProperty("class", "SoundButton")
+            btn.setFixedHeight(75)
                 
             btn.clicked.connect(lambda _, p=path, v = self.settings["volume"]: self.player.play_sound(path = p, devices = devices, volume = v))
 
@@ -981,13 +1050,14 @@ class MainWindow(QMainWindow):
             self.grid.addWidget(btn, row, col)
 
             if name not in self.sound_buttons.keys():
-                self.sound_buttons[name] = {"path": path, "emoji": "", "duration": duration, "file_type": f".{path.split(".")[-1]}"}
+                self.sound_buttons[name] = {"path": path, "emoji": f"{self.icons_path}/Icon_Placeholder.png", "duration": duration, "file_type": f".{path.split(".")[-1]}"}
 
             if name in self.button_icons.keys():
                 self.sound_buttons[name]["emoji"] = self.button_icons[name]
 
-            if self.sound_buttons[name]["emoji"] != "":
+            if self.sound_buttons[name]["emoji"] != f"{self.icons_path}/Icon_Placeholder.png":
                 btn.setIcon(QIcon(self.sound_buttons[name]["emoji"]))
+                btn.setIconSize(QSize(60, 55))
 
 
 
@@ -1083,44 +1153,11 @@ class MainWindow(QMainWindow):
 
         except Exception as e:
             QMessageBox.warning(self, f"Error", f"Unable to save icon path, see: {e}")
-                
-
-    
-        # def _play(device):
-            
-        #     try:
-        #         data, samplerate = sf.read(path)
-        #         data = np.clip(data * volume_level, -1.0, 1.0)
-                
-        #         sd.play(data, samplerate=samplerate, device=device)
-
-        #         while sd.get_stream().active:
-
-        #             if self.stop_event == True:
-        #                 sd.stop()
-        #                 break
-
-        #         sd.wait()
-                
-        #     except Exception as e:
-        #         print(f"Error playing sound on device {device}: {e}\n")
-
-
-        # self.stop_event = False
-
-        # threading.Thread(target=_play, args=(self.settings["default_input"],)).start()
-        # threading.Thread(target=_play, args=(self.settings["default_output"],)).start()
-        
-
-    # def stop_sounds(self):
-    #     print("Stopping sound(s)")
-
-    #     self.stop_event = True
         
 
     def closeEvent(self, event):
         
-        sd.stop()
+        self.player.stop()
         return super().closeEvent(event)
 
 

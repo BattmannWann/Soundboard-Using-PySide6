@@ -114,6 +114,12 @@ QToolBar {
 }
 
 
+QLabel#TableContentLabels {
+
+    padding-top: 20px;
+}
+
+
 
 /* === Vertical and Horizontal Separators */
 
