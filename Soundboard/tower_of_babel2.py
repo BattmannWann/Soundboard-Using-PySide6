@@ -49,7 +49,7 @@ class MultiDevicePlayer:
         self.threads = []
 
 
-    def play_sound(self, path, devices, volume=1.0):
+    def play_sound(self, path, devices, volume = 1.0):
         
         """
         Play the given sound file on the input and output device simultaneously 
