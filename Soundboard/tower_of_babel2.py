@@ -73,10 +73,10 @@ class MultiDevicePlayer:
         
         for device in devices:
             
-            t = threading.Thread(target=self._play_on_device,
+            thread = threading.Thread(target=self._play_on_device,
                                  args=(data.copy(), samplerate, device))
-            t.start()
-            self.threads.append(t)
+            thread.start()
+            self.threads.append(thread)
 
 
     def _play_on_device(self, data, samplerate, device):
