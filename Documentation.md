@@ -36,18 +36,18 @@ I will format this documentation such that you may use the links provided in the
 
 ## Contents
 
-1. Purpose of the Application
+### 1. Purpose of the Application
 
-2. Implementation Overview
+### 2. Implementation Overview
 
-3. Classes
+### 3. Classes
 
     3.1 Settings
     3.2 EditFiles
     3.3 MainWindow
     3.4 MultiDevicePlayer
 
-4. Methods
+### 4. Methods
 
     4.1 Methods in class Settings
 
@@ -94,38 +94,38 @@ I will format this documentation such that you may use the links provided in the
         4.4.4 _match_channels()
         4.4.5 stop()
 
-5. Imports and Libraries
+### 5. Imports and Libraries
 
-    5.1 PySide6.QtCore
-    5.2 PySide6.QtGui
-    5.3 PySide6.QtWidgets
-    5.4 superqt
-    5.5 sys
-    5.6 os
-    5.7 json
-    5.8 threading
-    5.9 sounddevice
-    5.10 soundfile
-    5.11 shutil
-    5.12 numpy
-    5.13 mutagen
-    5.14 getpass
+    5.1 PySide6.QtCore <br>
+    5.2 PySide6.QtGui <br>
+    5.3 PySide6.QtWidgets <br>
+    5.4 superqt <br>
+    5.5 sys <br>
+    5.6 os <br>
+    5.7 json <br>
+    5.8 threading <br>
+    5.9 sounddevice <br>
+    5.10 soundfile <br>
+    5.11 shutil <br>
+    5.12 numpy <br>
+    5.13 mutagen <br>
+    5.14 getpass <br>
 
-6. General Code
+### 6. General Code
 
-    6.1 Lines 1166 - 1175 in tower_of_babel2.py
-    6.2 settings.json
-    6.3 python_testing.py
-    6.4 requirements.txt
-    6.5 media/
-    6.6 sounds/
-    6.7 unedited_sounds/
-    6.8 button_images.json
-    6.9 themes/
-    6.10 fonts/
+    6.1 Lines 1166 - 1175 in tower_of_babel2.py <br>
+    6.2 settings.json <br> 
+    6.3 python_testing.py <br>
+    6.4 requirements.txt <br>
+    6.5 media/ <br>
+    6.6 sounds/ <br>
+    6.7 unedited_sounds/ <br>
+    6.8 button_images.json <br>
+    6.9 themes/ <br>
+    6.10 fonts/ <br>
 
 
-7. How to run the soundboard using the Command Line Interface (CLI)
+### 7. How to run the soundboard using the Command Line Interface (CLI)
 
     7.1 Initialisation/Requirements
     7.2 Setup
@@ -137,11 +137,11 @@ I will format this documentation such that you may use the links provided in the
 
 The purpose of this application is to provide a soundboard alternative to the one provided by Discord. This application hosts all the main features provided by discord, and a few extras, such as:
 
-    - **Adding sound files**: This can be done using the application, much like Discord. However, Discord limits users on the length of the sound you choose, whereas, this is not a limitation in the app. 
+- **Adding sound files**: This can be done using the application, much like Discord. However, Discord limits users on the length of the sound you choose, whereas, this is not a limitation in the app. 
 
-    - **Customising the Sounds**: Much like Discord, all the sounds can be renamed, given an emoji/icon, deleted, and trimmed (users can select a specific segment of the sound uploaded to be played). A difference in this application is that the whole sound can be used, with any segment being open to be chosen, along with the option to choose any image file for the sound itself. 
+- **Customising the Sounds**: Much like Discord, all the sounds can be renamed, given an emoji/icon, deleted, and trimmed (users can select a specific segment of the sound uploaded to be played). A difference in this application is that the whole sound can be used, with any segment being open to be chosen, along with the option to choose any image file for the sound itself. 
 
-    - **Stopping Sounds**: Unlike in Discord, the sounds can be stopped (i.e. playback stops) by the user at any given time. 
+- **Stopping Sounds**: Unlike in Discord, the sounds can be stopped (i.e. playback stops) by the user at any given time. 
 
 
 ---
@@ -215,24 +215,27 @@ This section will go into explicit detail as to what each method within each cla
 
 This is the class constructor, which handles the following operations:
 
-    - Make the title of the window "Settings".
+```md
 
-    - Create a main layout to add sub-layouts into; in this case the settings window opts for a grid layout.
+- Make the title of the window "Settings".
 
-    - Widgets are then added to the grid layout
+- Create a main layout to add sub-layouts into; in this case the settings window opts for a grid layout.
 
-    - The first row features a label detailing the dropdown box next to it is to select the default output audio device.
+- Widgets are then added to the grid layout
 
-    - The second row features a label detailing the dropbox next to it is for the default input device.
+- The first row features a label detailing the dropdown box next to it is to select the default output audio device.
 
-    - The following row allows the user to alter the default volume setting for all of the sounds; labelled appropriately
+- The second row features a label detailing the dropbox next to it is for the default input device.
 
-    - The last row allows the user to change the username presented by the system. The username is collected by the `getpass` library and is the device's default username setting. 
+- The following row allows the user to alter the default volume setting for all of the sounds; labelled appropriately
 
-    - A save button to allow the user to permanently change the application's settings. This is achieved through reading and writing to a JSON file called `settings.json`
+- The last row allows the user to change the username presented by the system. The username is collected by the `getpass` library and is the device's default username setting. 
 
-    - To access the occurrence of `MainWindow`, it has been passed as an argument when creating the Settings class. This way any relevant variables and methods can be accessed and called. Thus, calling a method within the MainWindow class will appropriately make the changes required.
-    This has been stored in a variable called `main_app`. **The argument passed is also called main_app**
+- A save button to allow the user to permanently change the application's settings. This is achieved through reading and writing to a JSON file called `settings.json`
+
+- To access the occurrence of `MainWindow`, it has been passed as an argument when creating the Settings class. This way any relevant variables and methods can be accessed and called. Thus, calling a method within the MainWindow class will appropriately make the changes required. This has been stored in a variable called `main_app`. **The argument passed is also called main_app**
+
+```
 
 
 #### 4.1.2 save()
@@ -584,24 +587,24 @@ This is the largest and most foundational import. These will be listed but only 
 
 The imports are: 
 
-    - QApplication
-    - QCheckBox
-    - QLabel
-    - QMainWindow
-    - QStatusBar
-    - QToolBar
-    - QWidget
-    - QVBoxLayout
-    - QHBoxLayout
-    - QGridLayout
-    - QPushButton
-    - QFileDialog
-    - QMessageBox
-    - QComboBox
-    - QScrollArea 
-    - QSlider
-    - QLineEdit
-    - QFrame
+- QApplication <br>
+- QCheckBox <br>
+- QLabel <br>
+- QMainWindow <br>
+- QStatusBar <br>
+- QToolBar <br>
+- QWidget <br>
+- QVBoxLayout <br>
+- QHBoxLayout <br>
+- QGridLayout <br>
+- QPushButton <br>
+- QFileDialog <br>
+- QMessageBox <br>
+- QComboBox <br>
+- QScrollArea  <br>
+- QSlider <br>
+- QLineEdit <br>
+- QFrame <br>
 
 
 ### 5.4 superqt
