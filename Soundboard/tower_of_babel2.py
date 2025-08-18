@@ -41,12 +41,13 @@ import time
 
 #--------------------------------------------------------------------
 
-
 class MultiDevicePlayer:
     
-    def __init__(self):
+    def __init__(self, main_app):
+        
         self.stop_event = threading.Event()
         self.threads = []
+        self.main_app = main_app
 
 
     def play_sound(self, path, devices, volume = 1.0):
@@ -60,7 +61,7 @@ class MultiDevicePlayer:
             
         except Exception as e:
             
-            QMessageBox.warning(self, "Error", f"Failed to read audio file, see: {e}")
+            print(f"Error, Failed to read audio file, see: {e}")
             return
 
         if data.ndim == 1:
@@ -107,7 +108,10 @@ class MultiDevicePlayer:
                     idx += blocksize
 
         except Exception as e:
-            QMessageBox.warning(self, "Error", f"There was an error playing sound on device {device}, see: {e}")
+            
+            print(f"Error, unable to play sound on device {device}, \n\n see {e}.")
+            print(type(super))
+            
 
 
     def _match_channels(self, data, max_channels):
@@ -894,7 +898,7 @@ class MainWindow(QMainWindow):
         self.trimmed_sounds_path = "trimmed_sounds"
         self.unedited_sounds_path = "unedited_sounds"
         
-        self.player = MultiDevicePlayer()
+        self.player = MultiDevicePlayer(self)
 
         self.sound_buttons = {}
         self.button_icons = button_icons
@@ -1160,8 +1164,6 @@ class MainWindow(QMainWindow):
         self.player.stop()
         return super().closeEvent(event)
 
-
-        
         
 app = QApplication([])
 window = MainWindow()
@@ -1173,3 +1175,9 @@ roboto_black = QFontDatabase.addApplicationFont("fonts/Roboto/Roboto-Black.ttf")
 
 window.show()
 app.exec()
+
+def show_error_message():
+    
+    QMessageBox(window, "Error", "There was an error")
+    
+msg = "Hello"

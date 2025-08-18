@@ -1,6 +1,6 @@
 {
     "volume": 0.5,
-    "default_output": 6,
-    "default_input": 3,
+    "default_output": 16,
+    "default_input": 5,
     "username": "BattmannWann"
 }
