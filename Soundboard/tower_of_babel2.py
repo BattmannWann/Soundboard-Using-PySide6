@@ -529,7 +529,9 @@ class EditFiles(QWidget):
                 print(f"Removing {self.main_app.sound_buttons[name.text()]["path"]}...")
                 os.remove(self.main_app.sound_buttons[name.text()]["path"])
                 self.main_app.sound_buttons.pop(name.text())
-                self.main_app.button_icons.pop(name.text())
+                
+                if name.text() in self.main_app.button_icons.keys():
+                    self.main_app.button_icons.pop(name.text())
 
                 ok_box.exec()
 
